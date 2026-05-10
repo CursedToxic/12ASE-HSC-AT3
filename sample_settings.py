@@ -4,6 +4,7 @@ from tkinter import messagebox
 
 # --- Functions ---
 # Create new note
+def new_note():
     for widget in app.winfo_children():
             widget.destroy()
 
