@@ -1,4 +1,4 @@
-from gui import *
+from gui_old import *
 
 entry = ttk.Entry(root, font=("Helvetica", 18))
 entry.pack(pady=10)
