@@ -1,4 +1,5 @@
 from gui_old import *
+import ttkbootstrap as ttk
 
 entry = ttk.Entry(root, font=("Helvetica", 18))
 entry.pack(pady=10)
