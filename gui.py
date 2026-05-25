@@ -145,6 +145,7 @@ class App(customtkinter.CTk):
         self._apply_settings(self.settings)
         btn.configure(text="☀" if new_mode == "Dark" else "🌙")
     
+        self.update_idletasks()
 
     # ── Clock screen ──────────────────────────────────────────────────────────
 
