@@ -135,6 +135,7 @@ class App(customtkinter.CTk):
             animations.click_pulse(submit_btn)
 
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            self.update_idletasks()
 
         _build()
 
@@ -143,6 +144,7 @@ class App(customtkinter.CTk):
         self.settings["appearance"] = new_mode
         self._apply_settings(self.settings)
         btn.configure(text="☀" if new_mode == "Dark" else "🌙")
+    
 
     # ── Clock screen ──────────────────────────────────────────────────────────
 
@@ -254,7 +256,7 @@ class App(customtkinter.CTk):
             cards_frame = customtkinter.CTkFrame(self, fg_color="transparent")
             cards_frame.grid(row=3, column=0, padx=32, sticky="nsew")
             for c in range(4):
-                cards_frame.grid_columnconfigure(c, weight=1)
+                cards_frame.grid_columnconfigure(c, weight=1, uniform="cards")
             cards_frame.grid_rowconfigure(0, weight=1)
 
             features = [
