@@ -1,3 +1,4 @@
+import sys
 import customtkinter as ctk
 from datetime import datetime
 
@@ -24,6 +25,26 @@ class NotesFrame(ctk.CTkFrame):
         self._build_main()
         self._refresh_sidebar()
         self._show_gallery()
+        self.after(0, self._bind_keys)
+
+    def _bind_keys(self):
+        root = self.winfo_toplevel()
+        self._kb_new = root.bind("<Control-n>", lambda _: self._new_page(), add="+")
+        self._kb_del = root.bind("<Control-d>", lambda _: self._delete_page(), add="+")
+        if sys.platform == "darwin":
+            self._kb_new_mac = root.bind("<Command-n>", lambda _: self._new_page(), add="+")
+            self._kb_del_mac = root.bind("<Command-d>", lambda _: self._delete_page(), add="+")
+        self.bind("<Destroy>", self._unbind_keys)
+
+    def _unbind_keys(self, e):
+        if e.widget is not self:
+            return
+        root = self.winfo_toplevel()
+        root.unbind("<Control-n>", self._kb_new)
+        root.unbind("<Control-d>", self._kb_del)
+        if sys.platform == "darwin":
+            root.unbind("<Command-n>", self._kb_new_mac)
+            root.unbind("<Command-d>", self._kb_del_mac)
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
 

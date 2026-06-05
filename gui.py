@@ -1,3 +1,4 @@
+import sys
 import customtkinter
 from datetime import datetime
 from event_planner import CalendarFrame
@@ -11,8 +12,8 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.title("Basic Study App")
-        self.geometry("640x480")
-        self.minsize(640, 480)
+        self.geometry("800x600")
+        self.minsize(800, 600)
         self.configure(fg_color=("white", "black"))
         self.update_idletasks()
 
@@ -29,7 +30,9 @@ class App(customtkinter.CTk):
             self, divisor=20, min_size=18, max_size=42)
         self._greeting_font = animations.responsive_font(
             self, weight="bold", divisor=30, min_size=16, max_size=38)
-        self._clock_job = None
+        self._clock_job  = None
+        self._history    = []
+        self._logged_in  = False
 
         self.ui_title = customtkinter.CTkLabel(
             self, text="Basic Study App", font=self.responsive_font,
@@ -41,7 +44,7 @@ class App(customtkinter.CTk):
             self, text="Login", corner_radius=50, command=self.login_system
         )
         login_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
-        animations.click_pulse(login_button)
+        # animations.click_pulse(login_button)
 
         self.theme_btn = customtkinter.CTkButton(
             self,
@@ -54,7 +57,50 @@ class App(customtkinter.CTk):
             command=lambda: self._toggle_theme(self.theme_btn)
         )
         self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
-        animations.click_pulse(self.theme_btn)
+        # animations.click_pulse(self.theme_btn)
+
+        self._setup_keybinds()
+
+    # ── Keybinds ──────────────────────────────────────────────────────────────
+
+    def _setup_keybinds(self):
+        mac = sys.platform == "darwin"
+
+        # Clipboard — forward to whichever widget has focus
+        for seq in ("<Control-c>", "<Command-c>" if mac else None):
+            if seq: self.bind_all(seq, lambda e: e.widget.event_generate("<<Copy>>"))
+        for seq in ("<Control-v>", "<Command-v>" if mac else None):
+            if seq: self.bind_all(seq, lambda e: e.widget.event_generate("<<Paste>>"))
+        for seq in ("<Control-x>", "<Command-x>" if mac else None):
+            if seq: self.bind_all(seq, lambda e: e.widget.event_generate("<<Cut>>"))
+        for seq in ("<Control-z>", "<Command-z>" if mac else None):
+            if seq: self.bind_all(seq, lambda e: e.widget.event_generate("<<Undo>>"))
+        for seq in ("<Control-a>", "<Command-a>" if mac else None):
+            if seq: self.bind_all(seq, lambda e: e.widget.event_generate("<<SelectAll>>"))
+
+        # App navigation
+        self._tab_sections = [
+            self.show_todo, self.show_notes,
+            self.show_flashcards, self.show_calendar,
+        ]
+        self._tab_index = -1
+        # self.bind("<Tab>", lambda _: self._tab_navigate())
+        self.bind("<Control-h>", lambda _: self.go_home() if self._logged_in else None)
+        if mac:
+            self.bind("<Command-h>", lambda _: self.go_home() if self._logged_in else None)
+        self.bind("<Escape>", lambda _: self._go_back())
+
+    def _go_back(self):
+        if self._history:
+            self._history.pop()()
+
+    def _tab_navigate(self, e):
+        focused = self.focus_get()
+        if isinstance(focused, (customtkinter.CTkEntry, customtkinter.CTkTextbox)):
+            return  # let the widget handle Tab normally
+        self._tab_index = (self._tab_index + 1) % len(self._tab_sections)
+        self._tab_sections[self._tab_index]()
+        return "break"
 
     # ── Clear helpers ─────────────────────────────────────────────────────────
 
@@ -129,10 +175,13 @@ class App(customtkinter.CTk):
                 if not invalid_usr and not invalid_pwd:
                     self.show_clock()
 
+            username_entry.bind("<Return>", lambda _: password_entry.focus())
+            password_entry.bind("<Return>",  lambda _: check_login())
+
             submit_btn = customtkinter.CTkButton(
                 self, text="Submit", corner_radius=50, command=check_login)
             submit_btn.grid(row=8, column=0, pady=16)
-            animations.click_pulse(submit_btn)
+            # animations.click_pulse(submit_btn)
 
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
             self.update_idletasks()
@@ -150,6 +199,8 @@ class App(customtkinter.CTk):
     # ── Clock screen ──────────────────────────────────────────────────────────
 
     def show_clock(self):
+        self._logged_in = True
+        self._history.clear()
         def _build():
             self._clear()
 
@@ -181,7 +232,7 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(
                 self, text="⌂  Home", corner_radius=50, command=self.go_home)
             home_btn.grid(row=3, column=0, pady=20)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
 
             def tick():
                 now = datetime.now()
@@ -196,6 +247,7 @@ class App(customtkinter.CTk):
     # ── Home screen ───────────────────────────────────────────────────────────
 
     def go_home(self):
+        self._history.clear()
         def _build():
             self._clear()
 
@@ -231,7 +283,7 @@ class App(customtkinter.CTk):
                 command=self.show_settings
             )
             settings_btn.grid(row=0, column=1)
-            animations.click_pulse(settings_btn)
+            # animations.click_pulse(settings_btn)
 
             clock_strip_font = customtkinter.CTkFont(family="Helvetica", size=14)
             clock_strip = customtkinter.CTkLabel(
@@ -288,7 +340,7 @@ class App(customtkinter.CTk):
                 card_widgets.append(card)
                 card_colors.append(color)
 
-            animations.stagger_cards(card_widgets, card_colors)
+            # animations.stagger_cards(card_widgets, card_colors)
 
             logout_btn = customtkinter.CTkButton(
                 self, text="Log Out", corner_radius=50,
@@ -298,7 +350,7 @@ class App(customtkinter.CTk):
                 command=self._logout
             )
             logout_btn.grid(row=4, column=0, pady=20)
-            animations.click_pulse(logout_btn)
+            # animations.click_pulse(logout_btn)
 
         _build()
 
@@ -311,6 +363,7 @@ class App(customtkinter.CTk):
         self.configure(fg_color=("white", "black"))
 
     def show_settings(self):
+        self._history.append(self.go_home)
         def _build():
             self._clear()
             self.grid_rowconfigure(0, weight=1)
@@ -319,13 +372,14 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50,
                 command=self.go_home)
             home_btn.grid(row=1, column=0, pady=10)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
         _build()
 
     def _on_settings_apply(self, new_settings):
         self._apply_settings(new_settings)
 
     def show_flashcards(self):
+        self._history.append(self.go_home)
         def _build():
             self._clear()
             self.grid_rowconfigure(0, weight=1)
@@ -333,10 +387,11 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50,
                 command=self.go_home)
             home_btn.grid(row=1, column=0, pady=10)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
         _build()
 
     def show_todo(self):
+        self._history.append(self.go_home)
         def _build():
             self._clear()
             self.grid_rowconfigure(0, weight=1)
@@ -344,10 +399,11 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50,
                 command=self.go_home)
             home_btn.grid(row=1, column=0, pady=10)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
         _build()
 
     def show_notes(self):
+        self._history.append(self.go_home)
         def _build():
             self._clear()
             self.grid_rowconfigure(0, weight=1)
@@ -355,10 +411,11 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50,
                 command=self.go_home)
             home_btn.grid(row=1, column=0, pady=10)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
         _build()
 
     def show_calendar(self):
+        self._history.append(self.go_home)
         def _build():
             self._clear()
             self.grid_rowconfigure(0, weight=1)
@@ -366,10 +423,12 @@ class App(customtkinter.CTk):
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50,
                 command=self.go_home)
             home_btn.grid(row=1, column=0, pady=10)
-            animations.click_pulse(home_btn)
+            # animations.click_pulse(home_btn)
         _build()
 
     def _logout(self):
+        self._logged_in = False
+        self._history.clear()
         def _build():
             self._clear()
 
@@ -385,7 +444,7 @@ class App(customtkinter.CTk):
             login_btn = customtkinter.CTkButton(
                 self, text="Login", corner_radius=50, command=self.login_system)
             login_btn.grid(row=1, column=0, padx=10, pady=10, sticky="n")
-            animations.click_pulse(login_btn)
+            # animations.click_pulse(login_btn)
 
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
