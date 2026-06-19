@@ -13,14 +13,14 @@ FONT_SIZE_OPTIONS = [
 APPEARANCE_OPTIONS = ["Light", "Dark", "System"]
 
 
-def _section_label(parent, row, text):
+def section_label(parent, row, text):
     ctk.CTkLabel(parent, text=text.upper(),
                  font=ctk.CTkFont(size=11),
                  text_color="gray50").grid(
         row=row, column=0, padx=20, pady=(16, 4), sticky="w")
 
 
-def _option_row(parent, options, current_var, start_row):
+def option_row(parent, options, current_var, start_row):
     """Renders a card-style group of radio buttons."""
     card = ctk.CTkFrame(parent, fg_color=("gray88", "gray17"), corner_radius=12)
     card.grid(row=start_row, column=0, padx=20, pady=(0, 4), sticky="ew")
@@ -53,29 +53,29 @@ class SettingsFrame(ctk.CTkFrame):
             row=0, column=0, padx=20, pady=(20, 4), sticky="w")
 
         # ── Appearance ──
-        _section_label(self, row=1, text="Appearance")
+        section_label(self, row=1, text="Appearance")
         self._appearance_var = ctk.StringVar(value=settings["appearance"])
-        _option_row(self,
+        option_row(self,
                     [(m, m) for m in APPEARANCE_OPTIONS],
                     self._appearance_var,
                     start_row=2)
 
         # ── Font size ──
-        _section_label(self, row=3, text="Font Size")
+        section_label(self, row=3, text="Font Size")
         self._scale_var = ctk.DoubleVar(value=settings["font_scale"])
-        _option_row(self, FONT_SIZE_OPTIONS, self._scale_var, start_row=4)
+        option_row(self, FONT_SIZE_OPTIONS, self._scale_var, start_row=4)
 
         # ── Apply button ──
         apply_btn = ctk.CTkButton(
             self, text="Apply",
             fg_color=PURPLE, hover_color=PURPLE_HOVER,
             corner_radius=50, font=ctk.CTkFont(size=14), width=140,
-            command=self._apply
+            command=self.apply
         )
         apply_btn.grid(row=6, column=0, pady=24)
         animations.click_pulse(apply_btn)
 
-    def _apply(self):
+    def apply(self):
         self._on_apply({
             "appearance": self._appearance_var.get(),
             "font_scale": self._scale_var.get(),

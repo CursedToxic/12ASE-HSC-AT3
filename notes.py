@@ -21,22 +21,22 @@ class NotesFrame(ctk.CTkFrame):
         self.view          = "gallery"
         self._gallery_cards = []
 
-        self._build_sidebar()
-        self._build_main()
-        self._refresh_sidebar()
-        self._show_gallery()
-        self.after(0, self._bind_keys)
+        self.build_sidebar()
+        self.build_main()
+        self.refresh_sidebar()
+        self.show_gallery()
+        self.after(0, self.bind_keys)
 
-    def _bind_keys(self):
+    def bind_keys(self):
         root = self.winfo_toplevel()
-        self._kb_new = root.bind("<Control-n>", lambda _: self._new_page(), add="+")
-        self._kb_del = root.bind("<Control-d>", lambda _: self._delete_page(), add="+")
+        self._kb_new = root.bind("<Control-n>", lambda _: self.new_page(), add="+")
+        self._kb_del = root.bind("<Control-d>", lambda _: self.delete_page(), add="+")
         if sys.platform == "darwin":
-            self._kb_new_mac = root.bind("<Command-n>", lambda _: self._new_page(), add="+")
-            self._kb_del_mac = root.bind("<Command-d>", lambda _: self._delete_page(), add="+")
-        self.bind("<Destroy>", self._unbind_keys)
+            self._kb_new_mac = root.bind("<Command-n>", lambda _: self.new_page(), add="+")
+            self._kb_del_mac = root.bind("<Command-d>", lambda _: self.delete_page(), add="+")
+        self.bind("<Destroy>", self.unbind_keys)
 
-    def _unbind_keys(self, e):
+    def unbind_keys(self, e):
         if e.widget is not self:
             return
         root = self.winfo_toplevel()
@@ -48,7 +48,7 @@ class NotesFrame(ctk.CTkFrame):
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
 
-    def _build_sidebar(self):
+    def build_sidebar(self):
         self.sidebar = ctk.CTkFrame(self, width=SIDEBAR_W, corner_radius=0,
                                     fg_color=("white", "black"))
         self.sidebar.grid(row=0, column=0, sticky="nsew")
@@ -66,7 +66,7 @@ class NotesFrame(ctk.CTkFrame):
             row=0, column=0, padx=10, pady=3, sticky="w")
         ctk.CTkButton(hdr, text="+", width=28, height=28, corner_radius=8,
                       fg_color=PURPLE, hover_color=PURPLE_HOVER,
-                      command=self._new_page).grid(row=0, column=1)
+                      command=self.new_page).grid(row=0, column=1)
 
         self.page_list = ctk.CTkScrollableFrame(
             self.sidebar, fg_color="transparent", corner_radius=0)
@@ -80,17 +80,17 @@ class NotesFrame(ctk.CTkFrame):
         self.gallery_btn = ctk.CTkButton(
             toggle, text="⊞ Gallery", height=28, corner_radius=8,
             fg_color=PURPLE, hover_color=PURPLE_HOVER,
-            font=ctk.CTkFont(size=12), command=self._show_gallery)
+            font=ctk.CTkFont(size=12), command=self.show_gallery)
         self.gallery_btn.grid(row=0, column=0, padx=(0, 3), sticky="ew")
 
         self.editor_btn = ctk.CTkButton(
             toggle, text="✎ Editor", height=28, corner_radius=8,
             fg_color="transparent", hover_color=("gray80", "gray25"),
             font=ctk.CTkFont(size=12),
-            command=lambda: self._open_page(self.current) if self.current is not None else None)
+            command=lambda: self.open_page(self.current) if self.current is not None else None)
         self.editor_btn.grid(row=0, column=1, padx=(3, 0), sticky="ew")
 
-    def _refresh_sidebar(self):
+    def refresh_sidebar(self):
         for w in self.page_list.winfo_children():
             w.destroy()
 
@@ -111,18 +111,18 @@ class NotesFrame(ctk.CTkFrame):
                 hover_color=PURPLE_HOVER if active else ("gray80", "gray25"),
                 text_color="white" if active else ("gray75", "gray75"),
                 corner_radius=8,
-                command=lambda idx=i: self._open_page(idx)
+                command=lambda idx=i: self.open_page(idx)
             ).grid(row=i, column=0, sticky="ew", padx=4, pady=2)
 
     # ── Main area ─────────────────────────────────────────────────────────────
 
-    def _build_main(self):
+    def build_main(self):
         self.main = ctk.CTkFrame(self, fg_color="transparent")
         self.main.grid(row=0, column=1, sticky="nsew")
         self.main.grid_columnconfigure(0, weight=1)
         self.main.grid_rowconfigure(0, weight=1)
 
-    def _clear_main(self):
+    def clear_main(self):
         for w in self.main.winfo_children():
             w.destroy()
         for r in range(5):
@@ -130,11 +130,11 @@ class NotesFrame(ctk.CTkFrame):
 
     # ── Gallery view ──────────────────────────────────────────────────────────
 
-    def _show_gallery(self):
-        self._save_current()
+    def show_gallery(self):
+        self.save_current()
         self.view = "gallery"
-        self._update_toggle_buttons()
-        self._clear_main()
+        self.update_toggle_buttons()
+        self.clear_main()
 
         self.main.grid_rowconfigure(0, weight=0)
         self.main.grid_rowconfigure(1, weight=1)
@@ -148,7 +148,7 @@ class NotesFrame(ctk.CTkFrame):
                      text_color=("black", "white")).grid(row=0, column=0, sticky="w")
         ctk.CTkButton(topbar, text="+ New Note", width=100, height=32,
                       corner_radius=8, fg_color=PURPLE, hover_color=PURPLE_HOVER,
-                      command=self._new_page).grid(row=0, column=1)
+                      command=self.new_page).grid(row=0, column=1)
 
         if not self.pages:
             ctk.CTkLabel(self.main,
@@ -164,11 +164,11 @@ class NotesFrame(ctk.CTkFrame):
             scroll.grid_columnconfigure(c, weight=1)
 
         self._gallery_cards = [
-            self._make_card(scroll, i, page, COLS)
+            self.make_card(scroll, i, page, COLS)
             for i, page in enumerate(self.pages)
         ]
 
-    def _make_card(self, parent, i, page, cols):
+    def make_card(self, parent, i, page, cols):
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12,
                             cursor="hand2",
                             border_width=2 if i == self.current else 0,
@@ -200,23 +200,23 @@ class NotesFrame(ctk.CTkFrame):
                 row=row, column=0, padx=12, pady=pady, sticky="ew")
 
         for w in [card] + list(card.winfo_children()):
-            w.bind("<Button-1>",        lambda _, idx=i: self._select_card(idx))
-            w.bind("<Double-Button-1>", lambda _, idx=i: self._open_page(idx))
+            w.bind("<Button-1>",        lambda _, idx=i: self.select_card(idx))
+            w.bind("<Double-Button-1>", lambda _, idx=i: self.open_page(idx))
 
         return card
 
-    def _select_card(self, idx):
+    def select_card(self, idx):
         self.current = idx
         for j, card in enumerate(self._gallery_cards):
             card.configure(border_width=2 if j == idx else 0)
-        self._refresh_sidebar()
+        self.refresh_sidebar()
 
     # ── Editor view ───────────────────────────────────────────────────────────
 
-    def _build_editor_view(self):
-        self._clear_main()
+    def build_editor_view(self):
+        self.clear_main()
         self.view = "editor"
-        self._update_toggle_buttons()
+        self.update_toggle_buttons()
 
         self.main.grid_rowconfigure(0, weight=0)
         self.main.grid_rowconfigure(1, weight=0)
@@ -230,14 +230,14 @@ class NotesFrame(ctk.CTkFrame):
             toolbar, placeholder_text="Page title…",
             font=ctk.CTkFont(size=16, weight="bold"), height=36)
         self.title_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.title_entry.bind("<KeyRelease>", self._on_title_change)
+        self.title_entry.bind("<KeyRelease>", self.on_title_change)
 
         ctk.CTkButton(toolbar, text="🗑 Delete", width=88, height=36,
                       fg_color="transparent",
                       border_width=1, border_color=("gray70", "gray35"),
                       text_color=("#A32D2D", "#F09595"),
                       hover_color=("gray85", "gray20"),
-                      command=self._delete_page).grid(row=0, column=1)
+                      command=self.delete_page).grid(row=0, column=1)
 
         self.meta_label = ctk.CTkLabel(
             self.main, text="", anchor="w",
@@ -248,28 +248,28 @@ class NotesFrame(ctk.CTkFrame):
             self.main, font=ctk.CTkFont(family="Helvetica", size=14),
             corner_radius=10, wrap="word", activate_scrollbars=True)
         self.body_box.grid(row=2, column=0, sticky="nsew", padx=16, pady=(0, 16))
-        self.body_box.bind("<KeyRelease>", self._on_body_change)
+        self.body_box.bind("<KeyRelease>", self.on_body_change)
 
     # ── Page actions ──────────────────────────────────────────────────────────
 
-    def _new_page(self):
+    def new_page(self):
         now = datetime.now().strftime("%d %b %Y, %I:%M %p")
         self.pages.append({"title": "Untitled", "body": "", "created": now})
-        self._open_page(len(self.pages) - 1)
+        self.open_page(len(self.pages) - 1)
 
-    def _open_page(self, idx):
-        self._save_current()
+    def open_page(self, idx):
+        self.save_current()
         self.current = idx
-        self._build_editor_view()
+        self.build_editor_view()
         page = self.pages[idx]
         self.title_entry.delete(0, "end")
         self.title_entry.insert(0, page["title"])
         self.body_box.delete("0.0", "end")
         self.body_box.insert("0.0", page["body"])
-        self._update_meta()
-        self._refresh_sidebar()
+        self.update_meta()
+        self.refresh_sidebar()
 
-    def _save_current(self):
+    def save_current(self):
         if self.current is None or self.current >= len(self.pages):
             return
         if self.view == "editor" and hasattr(self, "title_entry"):
@@ -278,29 +278,29 @@ class NotesFrame(ctk.CTkFrame):
             self.pages[self.current]["body"] = (
                 self.body_box.get("0.0", "end").rstrip("\n"))
 
-    def _delete_page(self):
+    def delete_page(self):
         if self.current is None:
             return
         self.pages.pop(self.current)
         self.current = None
-        self._refresh_sidebar()
-        self._show_gallery()
+        self.refresh_sidebar()
+        self.show_gallery()
 
-    def _on_title_change(self, _=None):
+    def on_title_change(self, _=None):
         if self.current is None:
             return
         self.pages[self.current]["title"] = (
             self.title_entry.get().strip() or "Untitled")
         self._refresh_sidebar()
 
-    def _on_body_change(self, _=None):
+    def on_body_change(self, _=None):
         if self.current is None:
             return
         self.pages[self.current]["body"] = (
             self.body_box.get("0.0", "end").rstrip("\n"))
-        self._update_meta()
+        self.update_meta()
 
-    def _update_meta(self):
+    def update_meta(self):
         if self.current is None:
             return
         page  = self.pages[self.current]
@@ -309,7 +309,7 @@ class NotesFrame(ctk.CTkFrame):
             text=f"Created {page['created']}  •  "
                  f"{words} word{'s' if words != 1 else ''}")
 
-    def _update_toggle_buttons(self):
+    def update_toggle_buttons(self):
         if self.view == "gallery":
             self.gallery_btn.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
             self.editor_btn.configure(fg_color="transparent")

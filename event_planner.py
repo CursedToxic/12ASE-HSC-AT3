@@ -32,21 +32,21 @@ class CalendarFrame(ctk.CTkFrame):
         self.selected_date = None
         self.current_date = datetime.now()
 
-        self._build_header()
-        self._build_main()
+        self.build_header()
+        self.build_main()
         self.display_month()
-        self.after(0, self._bind_keys)
+        self.after(0, self.bind_keys)
 
-    def _bind_keys(self):
+    def bind_keys(self):
         root = self.winfo_toplevel()
-        self._kb_left  = root.bind("<Left>",      lambda _: self._change_month(-1), add="+")
-        self._kb_right = root.bind("<Right>",     lambda _: self._change_month(1),  add="+")
-        self._kb_today = root.bind("<Control-t>", lambda _: self._go_to_today(),    add="+")
+        self._kb_left  = root.bind("<Left>",      lambda _: self.change_month(-1), add="+")
+        self._kb_right = root.bind("<Right>",     lambda _: self.change_month(1),  add="+")
+        self._kb_today = root.bind("<Control-t>", lambda _: self.go_to_today(),    add="+")
         if sys.platform == "darwin":
-            self._kb_today_mac = root.bind("<Command-t>", lambda _: self._go_to_today(), add="+")
-        self.bind("<Destroy>", self._unbind_keys)
+            self._kb_today_mac = root.bind("<Command-t>", lambda _: self.go_to_today(), add="+")
+        self.bind("<Destroy>", self.unbind_keys)
 
-    def _unbind_keys(self, e):
+    def unbind_keys(self, e):
         if e.widget is not self:
             return
         root = self.winfo_toplevel()
@@ -58,16 +58,16 @@ class CalendarFrame(ctk.CTkFrame):
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
-    def _key(self, d=None):
+    def key(self, d=None):
         return (d or self.selected_date).strftime("%Y-%m-%d")
 
-    def _refresh(self):
+    def refresh(self):
         self.display_month()
-        self._render_events()
+        self.render_events()
 
     # ── layout ────────────────────────────────────────────────────────────────
 
-    def _build_header(self):
+    def build_header(self):
         hdr = ctk.CTkFrame(self, fg_color="transparent")
         hdr.pack(fill="x", padx=20, pady=(16, 8))
         hdr.grid_columnconfigure(1, weight=1)
@@ -75,7 +75,7 @@ class CalendarFrame(ctk.CTkFrame):
         self.prev_btn = ctk.CTkButton(
             hdr, text="◀", width=50,
             font=ctk.CTkFont(size=16, weight="bold"),
-            command=lambda: self._change_month(-1),
+            command=lambda: self.change_month(-1),
             fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
         self.prev_btn.grid(row=0, column=0, padx=(0, 10))
 
@@ -86,7 +86,7 @@ class CalendarFrame(ctk.CTkFrame):
         ctk.CTkButton(
             hdr, text="Today", width=72,
             font=ctk.CTkFont(size=13),
-            command=self._go_to_today,
+            command=self.go_to_today,
             fg_color="transparent", hover_color=("gray80", "gray25"),
             border_width=1, border_color=("gray60", "gray40"),
             corner_radius=12).grid(row=0, column=2, padx=(0, 8))
@@ -94,11 +94,11 @@ class CalendarFrame(ctk.CTkFrame):
         self.next_btn = ctk.CTkButton(
             hdr, text="▶", width=50,
             font=ctk.CTkFont(size=16, weight="bold"),
-            command=lambda: self._change_month(1),
+            command=lambda: self.change_month(1),
             fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
         self.next_btn.grid(row=0, column=3, padx=(0, 0))
 
-    def _build_main(self):
+    def build_main(self):
         main = ctk.CTkFrame(self, fg_color="transparent")
         main.pack(fill="both", expand=True, padx=20, pady=(0, 16))
         main.grid_columnconfigure(0, weight=3)
@@ -138,7 +138,7 @@ class CalendarFrame(ctk.CTkFrame):
         self.event_area.grid_columnconfigure(0, weight=1)
         self.event_area.grid_rowconfigure(2, weight=1)
 
-        self._render_events()
+        self.render_events()
 
     # ── calendar rendering ────────────────────────────────────────────────────
 
@@ -174,40 +174,40 @@ class CalendarFrame(ctk.CTkFrame):
 
     # ── navigation ────────────────────────────────────────────────────────────
 
-    def _change_month(self, delta):
+    def change_month(self, delta):
         m = self.current_date.month + delta
         y = self.current_date.year + (m - 1) // 12
         self.current_date = self.current_date.replace(year=y, month=(m - 1) % 12 + 1)
-        self._refresh()
+        self.refresh()
 
-    def _go_to_today(self):
+    def go_to_today(self):
         self.current_date = datetime.now()
         self.selected_date = self.current_date
-        self._refresh()
+        self.refresh()
 
     def select_date(self, date_obj):
         self.selected_date = date_obj
-        self._refresh()
+        self.refresh()
 
     # ── event actions ─────────────────────────────────────────────────────────
 
-    def _add_event(self):
+    def add_event(self):
         text = self.ev_entry.get().strip()
         if not text or not self.selected_date:
             return
-        self.events.setdefault(self._key(), []).append(text)
+        self.events.setdefault(self.key(), []).append(text)
         self.ev_entry.delete(0, "end")
-        self._refresh()
+        self.refresh()
 
-    def _delete_event(self, key, idx):
+    def delete_event(self, key, idx):
         self.events[key].pop(idx)
         if not self.events[key]:
             del self.events[key]
-        self._refresh()
+        self.refresh()
 
     # ── events panel ──────────────────────────────────────────────────────────
 
-    def _render_events(self):
+    def render_events(self):
         for w in self.event_area.winfo_children():
             w.destroy()
 
@@ -227,9 +227,9 @@ class CalendarFrame(ctk.CTkFrame):
             placeholder_text="Add event…" if has_day else "Select a day first",
             state="normal" if has_day else "disabled")
         self.ev_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.ev_entry.bind("<Return>", lambda _: self._add_event())
+        self.ev_entry.bind("<Return>", lambda _: self.add_event())
 
-        add_btn = primary_btn(inp, "+ Add", self._add_event, width=72)
+        add_btn = primary_btn(inp, "+ Add", self.add_event, width=72)
         add_btn.configure(state="normal" if has_day else "disabled")
         add_btn.grid(row=0, column=1)
 

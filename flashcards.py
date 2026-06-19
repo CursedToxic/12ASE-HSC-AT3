@@ -7,13 +7,13 @@ PURPLE_HOVER = "#3C3489"
 BG_CARD      = ("gray85", "gray20")
 
 
-def _primary_btn(parent, text, command, width=100):
+def primary_btn(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command,
                          fg_color=PURPLE, hover_color=PURPLE_HOVER,
                          font=ctk.CTkFont(size=13), width=width)
 
 
-def _ghost_btn(parent, text, command, width=100):
+def ghost_btn(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command,
                          fg_color="transparent",
                          hover_color=("gray80", "gray30"),
@@ -22,7 +22,7 @@ def _ghost_btn(parent, text, command, width=100):
                          font=ctk.CTkFont(size=13), width=width)
 
 
-def _danger_btn(parent, text, command, width=32):
+def danger_btn(parent, text, command, width=32):
     return ctk.CTkButton(parent, text=text, command=command,
                          fg_color="transparent",
                          hover_color=("gray80", "gray30"),
@@ -45,43 +45,43 @@ class FlashcardsFrame(ctk.CTkFrame):
         self.decks = {}          # {deck_name: [{"front": str, "back": str}, ...]}
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self._show_deck_list()
+        self.show_deck_list()
 
     # ── View switchers ────────────────────────────────────────────────────────
 
-    def _show_deck_list(self):
-        self._clear()
+    def show_deck_list(self):
+        self.clear()
         DeckListView(self, self.decks,
-                     on_open=self._show_deck_editor,
-                     on_delete=self._delete_deck,
-                     on_create=self._create_deck).grid(row=0, column=0, sticky="nsew")
+                     on_open=self.show_deck_editor,
+                     on_delete=self.delete_deck,
+                     on_create=self.create_deck).grid(row=0, column=0, sticky="nsew")
 
-    def _show_deck_editor(self, deck_name):
-        self._clear()
+    def show_deck_editor(self, deck_name):
+        self.clear()
         DeckEditorView(self, deck_name, self.decks[deck_name],
-                       on_back=self._show_deck_list,
-                       on_study=lambda: self._show_study(deck_name)).grid(
+                       on_back=self.show_deck_list,
+                       on_study=lambda: self.show_study(deck_name)).grid(
             row=0, column=0, sticky="nsew")
 
-    def _show_study(self, deck_name):
-        self._clear()
+    def show_study(self, deck_name):
+        self.clear()
         StudyView(self, deck_name, self.decks[deck_name],
-                  on_back=lambda: self._show_deck_editor(deck_name)).grid(
+                  on_back=lambda: self.show_deck_editor(deck_name)).grid(
             row=0, column=0, sticky="nsew")
 
-    def _create_deck(self, name):
+    def create_deck(self, name):
         name = name.strip()
         if not name or name in self.decks:
             return False
         self.decks[name] = []
-        self._show_deck_list()
+        self.show_deck_list()
         return True
 
-    def _delete_deck(self, name):
+    def delete_deck(self, name):
         self.decks.pop(name, None)
-        self._show_deck_list()
+        self.show_deck_list()
 
-    def _clear(self):
+    def clear(self):
         for w in self.winfo_children():
             w.destroy()
 
@@ -108,8 +108,8 @@ class DeckListView(ctk.CTkFrame):
         inp.grid_columnconfigure(0, weight=1)
         self.deck_entry = ctk.CTkEntry(inp, placeholder_text="New deck name…", height=34)
         self.deck_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.deck_entry.bind("<Return>", lambda _: self._do_create())
-        create_btn = _primary_btn(inp, "+ Create", self._do_create, width=80)
+        self.deck_entry.bind("<Return>", lambda _: self.do_create())
+        create_btn = primary_btn(inp, "+ Create", self.do_create, width=80)
         create_btn.grid(row=0, column=1)
         animations.click_pulse(create_btn)
 
@@ -117,14 +117,14 @@ class DeckListView(ctk.CTkFrame):
         self.list_area.grid(row=2, column=0, padx=20, pady=(0, 16), sticky="nsew")
         self.list_area.grid_columnconfigure(0, weight=1)
 
-        self._render()
+        self.render()
 
-    def _do_create(self):
+    def do_create(self):
         name = self.deck_entry.get()
         if self.on_create(name):
             self.deck_entry.delete(0, "end")
 
-    def _render(self):
+    def render(self):
         for w in self.list_area.winfo_children():
             w.destroy()
 
@@ -156,7 +156,7 @@ class DeckListView(ctk.CTkFrame):
                 font=ctk.CTkFont(size=11)
             ).grid(row=0, column=1, padx=8)
 
-            del_btn = _danger_btn(row, "🗑", lambda n=name: self.on_delete(n))
+            del_btn = danger_btn(row, "🗑", lambda n=name: self.on_delete(n))
             del_btn.grid(row=0, column=2, padx=(0, 6))
             animations.click_pulse(del_btn)
 
@@ -179,13 +179,13 @@ class DeckEditorView(ctk.CTkFrame):
         hdr.grid(row=0, column=0, padx=20, pady=(20, 4), sticky="ew")
         hdr.grid_columnconfigure(1, weight=1)
 
-        back_btn = _ghost_btn(hdr, "← Back", on_back, width=80)
+        back_btn = ghost_btn(hdr, "← Back", on_back, width=80)
         back_btn.grid(row=0, column=0, padx=(0, 12))
         animations.click_pulse(back_btn)
         ctk.CTkLabel(hdr, text=deck_name,
                      font=ctk.CTkFont(size=20, weight="bold")).grid(
             row=0, column=1, sticky="w")
-        self.study_btn = _primary_btn(hdr, "▶  Study", on_study, width=90)
+        self.study_btn = primary_btn(hdr, "▶  Study", on_study, width=90)
         self.study_btn.grid(row=0, column=2)
         animations.click_pulse(self.study_btn)
 
@@ -206,9 +206,9 @@ class DeckEditorView(ctk.CTkFrame):
 
         self.back_entry = ctk.CTkEntry(add_row, placeholder_text="Answer / definition…", height=32)
         self.back_entry.grid(row=1, column=1, padx=(6, 6), pady=(0, 10), sticky="ew")
-        self.back_entry.bind("<Return>", lambda _: self._add_card())
+        self.back_entry.bind("<Return>", lambda _: self.add_card())
 
-        add_card_btn = _primary_btn(add_row, "+ Add Card", self._add_card, width=90)
+        add_card_btn = primary_btn(add_row, "+ Add Card", self.add_card, width=90)
         add_card_btn.grid(row=1, column=2, padx=(0, 12), pady=(0, 10))
         animations.click_pulse(add_card_btn)
 
@@ -218,9 +218,9 @@ class DeckEditorView(ctk.CTkFrame):
         self.list_area.grid_columnconfigure(0, weight=1)
         self.list_area.grid_columnconfigure(1, weight=1)
 
-        self._render()
+        self.render()
 
-    def _add_card(self):
+    def add_card(self):
         front = self.front_entry.get().strip()
         back  = self.back_entry.get().strip()
         if not front or not back:
@@ -229,13 +229,13 @@ class DeckEditorView(ctk.CTkFrame):
         self.front_entry.delete(0, "end")
         self.back_entry.delete(0, "end")
         self.front_entry.focus()
-        self._render()
+        self.render()
 
-    def _delete_card(self, idx):
+    def delete_card(self, idx):
         self.cards.pop(idx)
-        self._render()
+        self.render()
 
-    def _render(self):
+    def render(self):
         for w in self.list_area.winfo_children():
             w.destroy()
 
@@ -268,7 +268,7 @@ class DeckEditorView(ctk.CTkFrame):
                          text_color=("gray50", "gray55"),
                          wraplength=200).grid(
                 row=0, column=1, padx=10, pady=8, sticky="ew")
-            del_btn = _danger_btn(row, "🗑", lambda i=i: self._delete_card(i))
+            del_btn = danger_btn(row, "🗑", lambda i=i: self.delete_card(i))
             del_btn.grid(row=0, column=2, padx=(0, 6))
             animations.click_pulse(del_btn)
 
@@ -295,7 +295,7 @@ class StudyView(ctk.CTkFrame):
         hdr = ctk.CTkFrame(self, fg_color="transparent")
         hdr.grid(row=0, column=0, padx=20, pady=(20, 4), sticky="ew")
         hdr.grid_columnconfigure(1, weight=1)
-        study_back_btn = _ghost_btn(hdr, "← Back", on_back, width=80)
+        study_back_btn = ghost_btn(hdr, "← Back", on_back, width=80)
         study_back_btn.grid(row=0, column=0, padx=(0, 12))
         animations.click_pulse(study_back_btn)
         ctk.CTkLabel(hdr, text=f"Studying: {deck_name}",
@@ -344,11 +344,11 @@ class StudyView(ctk.CTkFrame):
             btn_row, text="✗  Still Learning",
             fg_color=("#8B2020", "#6B1A1A"), hover_color=("#6B1A1A", "#4B1010"),
             font=ctk.CTkFont(size=14), width=150, corner_radius=50,
-            command=self._mark_unknown)
+            command=self.mark_unknown)
         self.unknown_btn.grid(row=0, column=0, padx=10)
         animations.click_pulse(self.unknown_btn)
 
-        self.flip_btn = _ghost_btn(btn_row, "Flip", self._flip, width=80)
+        self.flip_btn = ghost_btn(btn_row, "Flip", self.flip, width=80)
         self.flip_btn.grid(row=0, column=1, padx=10)
         animations.click_pulse(self.flip_btn)
 
@@ -356,16 +356,16 @@ class StudyView(ctk.CTkFrame):
             btn_row, text="✓  Got It",
             fg_color=("#1a5c2a", "#1a4a22"), hover_color=("#134520", "#0f3318"),
             font=ctk.CTkFont(size=14), width=150, corner_radius=50,
-            command=self._mark_known)
+            command=self.mark_known)
         self.known_btn.grid(row=0, column=2, padx=10)
         animations.click_pulse(self.known_btn)
 
-        self._load_card()
+        self.load_card()
 
-    def _load_card(self):
+    def load_card(self):
         self.showing_back = False
         if self.current >= len(self.queue):
-            self._show_results()
+            self.show_results()
             return
 
         card = self.queue[self.current]
@@ -374,9 +374,9 @@ class StudyView(ctk.CTkFrame):
         self.hint_label.configure(text="Click to flip")
         self.progress_label.configure(
             text=f"{self.current + 1} / {len(self.queue)}")
-        self._set_action_state("disabled")
+        self.set_action_state("disabled")
 
-    def _flip(self):
+    def flip(self):
         if self.current >= len(self.queue):
             return
         card = self.queue[self.current]
@@ -385,29 +385,29 @@ class StudyView(ctk.CTkFrame):
             self.side_label.configure(text="ANSWER")
             self.card_text.configure(text=card["back"])
             self.hint_label.configure(text="")
-            self._set_action_state("normal")
+            self.set_action_state("normal")
         else:
             self.showing_back = False
             self.side_label.configure(text="QUESTION")
             self.card_text.configure(text=card["front"])
             self.hint_label.configure(text="Click to flip")
-            self._set_action_state("disabled")
+            self.set_action_state("disabled")
 
-    def _set_action_state(self, state):
+    def set_action_state(self, state):
         self.known_btn.configure(state=state)
         self.unknown_btn.configure(state=state)
 
-    def _mark_known(self):
+    def mark_known(self):
         self.known += 1
         self.current += 1
-        self._load_card()
+        self.load_card()
 
-    def _mark_unknown(self):
+    def mark_unknown(self):
         self.unknown += 1
         self.current += 1
-        self._load_card()
+        self.load_card()
 
-    def _show_results(self):
+    def show_results(self):
         for w in self.winfo_children():
             w.destroy()
 
@@ -435,9 +435,9 @@ class StudyView(ctk.CTkFrame):
 
         btns = ctk.CTkFrame(results, fg_color="transparent")
         btns.grid(row=3, column=0, pady=(0, 30))
-        again_btn = _primary_btn(btns, "Study Again", lambda: self.on_back(), width=120)
+        again_btn = primary_btn(btns, "Study Again", lambda: self.on_back(), width=120)
         again_btn.grid(row=0, column=0, padx=8)
         animations.click_pulse(again_btn)
-        back_btn = _ghost_btn(btns, "Back to Deck", self.on_back, width=120)
+        back_btn = ghost_btn(btns, "Back to Deck", self.on_back, width=120)
         back_btn.grid(row=0, column=1, padx=8)
         animations.click_pulse(back_btn)
