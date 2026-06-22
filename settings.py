@@ -12,7 +12,6 @@ FONT_SIZE_OPTIONS = [
 
 APPEARANCE_OPTIONS = ["Light", "Dark", "System"]
 
-
 def section_label(parent, row, text):
     ctk.CTkLabel(parent, text=text.upper(),
                  font=ctk.CTkFont(size=11),
@@ -45,38 +44,25 @@ class SettingsFrame(ctk.CTkFrame):
         super().__init__(master, corner_radius=0, fg_color="transparent")
         self._on_apply = on_apply
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_rowconfigure(7, weight=1)
 
         # Title
-        ctk.CTkLabel(self, text="Settings",
-                     font=ctk.CTkFont(size=20, weight="bold")).grid(
-            row=0, column=0, padx=20, pady=(20, 4), sticky="w")
+        ctk.CTkLabel(self, text="Settings", font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=0, padx=20, pady=(20, 4), sticky="w")
 
         # ── Appearance ──
         section_label(self, row=1, text="Appearance")
-        self._appearance_var = ctk.StringVar(value=settings["appearance"])
-        option_row(self,
-                    [(m, m) for m in APPEARANCE_OPTIONS],
-                    self._appearance_var,
-                    start_row=2)
+        self.appearance_var = ctk.StringVar(value=settings["appearance"])
+        option_row(self, [(m, m) for m in APPEARANCE_OPTIONS], self.appearance_var, start_row=2)
 
         # ── Font size ──
         section_label(self, row=3, text="Font Size")
-        self._scale_var = ctk.DoubleVar(value=settings["font_scale"])
-        option_row(self, FONT_SIZE_OPTIONS, self._scale_var, start_row=4)
+        self.scale_var = ctk.DoubleVar(value=settings["font_scale"])
+        option_row(self, FONT_SIZE_OPTIONS, self.scale_var, start_row=4)
 
         # ── Apply button ──
-        apply_btn = ctk.CTkButton(
-            self, text="Apply",
-            fg_color=PURPLE, hover_color=PURPLE_HOVER,
-            corner_radius=50, font=ctk.CTkFont(size=14), width=140,
-            command=self.apply
-        )
+        apply_btn = ctk.CTkButton(self, text="Apply", fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=50, font=ctk.CTkFont(size=14), width=140,command=self.apply)
         apply_btn.grid(row=6, column=0, pady=24)
         animations.click_pulse(apply_btn)
 
     def apply(self):
-        self._on_apply({
-            "appearance": self._appearance_var.get(),
-            "font_scale": self._scale_var.get(),
-        })
+        self._on_apply({"appearance": self.appearance_var.get(), "font_scale": self.scale_var.get()})

@@ -48,8 +48,8 @@ class App(customtkinter.CTk):
         )
         self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
+        # Create and Display a Login Button
         login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login_system).grid(row=1, column=0, padx=10, pady=10, sticky="n")
-        # animations.click_pulse(login_button)
 
         # Create and Display a button for registraion
         register_button = customtkinter.CTkButton(self, text="Register",  corner_radius=50, command=self.registration).grid(row=2, column=0, padx=10, pady=10, sticky="n")
@@ -268,7 +268,7 @@ class App(customtkinter.CTk):
 
                 password = password_entry.get()
 
-                # Gemini gave instructions and helped debug here. This enabled me to imporve percieved program responsiveness.
+                # Gemini gave instructions and helped debug here. This enabled me to improve perceived program responsiveness.
 
                 # Followed AI's instructions to optimise the criteria
                 invalid_usr = (not user.isalnum() or len(user) < 2)
@@ -314,8 +314,8 @@ class App(customtkinter.CTk):
             submit_btn = customtkinter.CTkButton(
                 self, text="Register", corner_radius=50, command=check_registration)
             submit_btn.grid(row=8, column=0, pady=16)
-            # animations.click_pulse(submit_btn)
-
+            
+            # I had to learn this. This inserts the element into the desired position, without the constraints of a grid.
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
             self.update_idletasks()
 
@@ -327,36 +327,51 @@ class App(customtkinter.CTk):
         self.logged_in = True
         self.history.clear()
         def build():
+            # Clear screen
             self.clear()
 
+            # Configure Rows
             self.grid_rowconfigure(0, weight=1)
             self.grid_rowconfigure(4, weight=1)
 
+            # Welcome Text
             customtkinter.CTkLabel(self, text=f"Welcome, {self.username}", font=("Helvetica", 18), text_color="gray60").grid(row=1, column=0, pady=(0, 6))
 
+            # It's important to display the Welcome text before and therefore outside of the frame to because I want the text to be above the clock (UI decision)
+
+            # Build the clock interface
+            # Note it is important to use .grid() separately in order to display the elements properly (ChatGPT helped me discover this)
+
+            # Create a Frame to store clock details
             clock_frame = customtkinter.CTkFrame(self, fg_color="transparent")
             clock_frame.grid(row=2, column=0)
-
+            
+            # Define the fonts (with help from Claude Code)
             clock_font = customtkinter.CTkFont(family="Helvetica", size=64, weight="bold")
-            ampm_font  = customtkinter.CTkFont(family="Helvetica", size=28, weight="bold")
+            am_pm_font  = customtkinter.CTkFont(family="Helvetica", size=28, weight="bold")
 
+            # Display the clock
             time_label = customtkinter.CTkLabel(clock_frame, text="", font=clock_font, fg_color="transparent")
             time_label.grid(row=0, column=0, padx=(0, 8))
 
-            am_pm = customtkinter.CTkLabel(clock_frame, text="", font=ampm_font, text_color="#534AB7", fg_color="transparent")
+            # Display an AM/PM label
+            am_pm = customtkinter.CTkLabel(clock_frame, text="", font=am_pm_font, text_color="#534AB7", fg_color="transparent")
             am_pm.grid(row=0, column=1)
 
+            # Home button
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home)
             home_btn.grid(row=3, column=0, pady=20)
 
+            # Followed instructions from Claude Code, converts datetime into string, same with AM/PM, update every 1000ms or 1s
             def tick():
                 now = datetime.now()
+                # Convert datetime into string
                 time_label.configure(text=now.strftime("%I:%M:%S"))
                 am_pm.configure(text=now.strftime("%p"))
+                # Update every 1000ms (1s for those who don't know)
                 self.clock_job = self.after(1000, tick)
 
             tick()
-
         build()
 
     # ── Home screen ───────────────────────────────────────────────────────────
@@ -445,6 +460,7 @@ class App(customtkinter.CTk):
     def apply_settings(self, new_settings):
         self.settings = new_settings
         geo = self.geometry()
+        
         customtkinter.set_appearance_mode(self.settings["appearance"])
         customtkinter.set_widget_scaling(self.settings["font_scale"])
         self.geometry(geo)
@@ -454,8 +470,14 @@ class App(customtkinter.CTk):
         self.history.append(self.go_home)
         def build():
             self.clear()
+
+            # Configure Rows
             self.grid_rowconfigure(0, weight=1)
+            
+            # Create Frame for settings
             SettingsFrame(self, self.settings, on_apply=self.on_settings_apply).grid(row=0, column=0, sticky="nsew")
+
+            # Display home button
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
@@ -494,8 +516,14 @@ class App(customtkinter.CTk):
         self.history.append(self.go_home)
         def build():
             self.clear()
+
+            # Configure rows
             self.grid_rowconfigure(0, weight=1)
+
+            # Create Frame for calendar file
             CalendarFrame(self).grid(row=0, column=0, sticky="nsew")
+
+            # Display home button
             home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
