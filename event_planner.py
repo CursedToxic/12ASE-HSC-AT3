@@ -9,15 +9,11 @@ PURPLE_HOVER = "#3C3489"
 BG_CARD      = ("gray85", "gray20")
 
 def primary_btn(parent, text, command, width=100):
-    return ctk.CTkButton(parent, text=text, command=command,
-                         fg_color=PURPLE, hover_color=PURPLE_HOVER,
-                         font=ctk.CTkFont(size=13), width=width)
+    return ctk.CTkButton(parent, text=text, command=command, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=13), width=width)
 
 def danger_btn(parent, text, command, width=32):
-    return ctk.CTkButton(parent, text=text, command=command,
-                         fg_color="transparent", hover_color=("gray80", "gray30"),
-                         text_color=("#A32D2D", "#F09595"),
-                         font=ctk.CTkFont(size=12), width=width)
+    return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent", hover_color=("gray80", "gray30"),
+                        text_color=("#A32D2D", "#F09595"), font=ctk.CTkFont(size=12), width=width)
 
 def scrollable(parent):
     return ctk.CTkScrollableFrame(parent, fg_color="transparent")
@@ -39,22 +35,22 @@ class CalendarFrame(ctk.CTkFrame):
 
     def bind_keys(self):
         root = self.winfo_toplevel()
-        self._kb_left  = root.bind("<Left>",      lambda _: self.change_month(-1), add="+")
-        self._kb_right = root.bind("<Right>",     lambda _: self.change_month(1),  add="+")
-        self._kb_today = root.bind("<Control-t>", lambda _: self.go_to_today(),    add="+")
+        self.left  = root.bind("<Left>",      lambda _: self.change_month(-1), add="+")
+        self.right = root.bind("<Right>",     lambda _: self.change_month(1),  add="+")
+        self.today = root.bind("<Control-t>", lambda _: self.go_to_today(),    add="+")
         if sys.platform == "darwin":
-            self._kb_today_mac = root.bind("<Command-t>", lambda _: self.go_to_today(), add="+")
+            self.today_mac = root.bind("<Command-t>", lambda _: self.go_to_today(), add="+")
         self.bind("<Destroy>", self.unbind_keys)
 
     def unbind_keys(self, e):
         if e.widget is not self:
             return
         root = self.winfo_toplevel()
-        root.unbind("<Left>",      self._kb_left)
-        root.unbind("<Right>",     self._kb_right)
-        root.unbind("<Control-t>", self._kb_today)
+        root.unbind("<Left>",      self.left)
+        root.unbind("<Right>",     self.right)
+        root.unbind("<Control-t>", self.today)
         if sys.platform == "darwin":
-            root.unbind("<Command-t>", self._kb_today_mac)
+            root.unbind("<Command-t>", self.today_mac)
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
@@ -115,17 +111,12 @@ class CalendarFrame(ctk.CTkFrame):
             self.calendar_frame.grid_rowconfigure(r, weight=1)
 
         for col, day in enumerate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]):
-            ctk.CTkLabel(self.calendar_frame, text=day,
-                         font=ctk.CTkFont(size=12, weight="bold"),
-                         text_color=("gray50", "gray55")).grid(
+            ctk.CTkLabel(self.calendar_frame, text=day, font=ctk.CTkFont(size=12, weight="bold"), text_color=("gray50", "gray55")).grid(
                 row=0, column=col, padx=2, pady=4, sticky="ew")
 
         self.date_buttons = [
-            [ctk.CTkButton(self.calendar_frame, text="",
-                           font=ctk.CTkFont(size=13),
-                           fg_color=BG_CARD, hover_color=PURPLE_HOVER, corner_radius=8,
-                           command=lambda: None)
-             for _ in range(7)]
+            [ctk.CTkButton(self.calendar_frame, text="", font=ctk.CTkFont(size=13), fg_color=BG_CARD, hover_color=PURPLE_HOVER, corner_radius=8, command=lambda: None) 
+            for _ in range(7)]
             for _ in range(6)
         ]
         for r, week in enumerate(self.date_buttons):
@@ -155,15 +146,14 @@ class CalendarFrame(ctk.CTkFrame):
             for day_idx, day in enumerate(week):
                 btn = self.date_buttons[week_idx][day_idx]
                 if day == 0:
-                    btn.configure(text="", state="disabled",
-                                  fg_color="transparent", border_width=0)
+                    btn.configure(text="", state="disabled", fg_color="transparent", border_width=0)
                 else:
                     date_obj = datetime(year, month, day)
-                    key      = self._key(date_obj)
+                    key      = self.key(date_obj)
                     is_today = (day == today.day and month == today.month
                                 and year == today.year)
                     is_sel   = (self.selected_date is not None
-                                and self._key() == key)
+                                and self.key() == key)
                     fg = PURPLE if is_today else (PURPLE_HOVER if is_sel else BG_CARD)
                     btn.configure(
                         text=f"{day}\n●" if self.events.get(key) else str(day),
@@ -198,6 +188,7 @@ class CalendarFrame(ctk.CTkFrame):
         self.events.setdefault(self.key(), []).append(text)
         self.ev_entry.delete(0, "end")
         self.refresh()
+        
 
     def delete_event(self, key, idx):
         self.events[key].pop(idx)
@@ -211,21 +202,15 @@ class CalendarFrame(ctk.CTkFrame):
         for w in self.event_area.winfo_children():
             w.destroy()
 
-        header_text = (self.selected_date.strftime("Events — %B %d, %Y")
-                       if self.selected_date else "Events")
-        ctk.CTkLabel(self.event_area, text=header_text,
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, sticky="w", pady=(0, 6))
+        header_text = (self.selected_date.strftime("Events — %B %d, %Y") if self.selected_date else "Events")
+        ctk.CTkLabel(self.event_area, text=header_text, font=ctk.CTkFont(size=13, weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 6))
 
         inp = ctk.CTkFrame(self.event_area, fg_color="transparent")
         inp.grid(row=1, column=0, sticky="ew", pady=(0, 6))
         inp.grid_columnconfigure(0, weight=1)
 
         has_day = bool(self.selected_date)
-        self.ev_entry = ctk.CTkEntry(
-            inp, height=34,
-            placeholder_text="Add event…" if has_day else "Select a day first",
-            state="normal" if has_day else "disabled")
+        self.ev_entry = ctk.CTkEntry(inp, height=34, placeholder_text="Add event…" if has_day else "Select a day first", state="normal" if has_day else "disabled")
         self.ev_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         self.ev_entry.bind("<Return>", lambda _: self.add_event())
 
@@ -234,27 +219,22 @@ class CalendarFrame(ctk.CTkFrame):
         add_btn.grid(row=0, column=1)
 
         if not has_day:
-            ctk.CTkLabel(self.event_area, text="Select a day to view events",
-                         text_color=("gray60", "gray50")).grid(row=2, column=0, pady=8)
+            ctk.CTkLabel(self.event_area, text="Select a day to view events", text_color=("gray60", "gray50")).grid(row=2, column=0, pady=8)
             return
 
-        evs = self.events.get(self._key(), [])
+        evs = self.events.get(self.key(), [])
         if not evs:
-            ctk.CTkLabel(self.event_area, text="No events for this day",
-                         text_color=("gray60", "gray50")).grid(row=2, column=0, pady=8)
+            ctk.CTkLabel(self.event_area, text="No events for this day", text_color=("gray60", "gray50")).grid(row=2, column=0, pady=8)
             return
 
         ev_list = scrollable(self.event_area)
         ev_list.grid(row=2, column=0, sticky="nsew")
         ev_list.grid_columnconfigure(0, weight=1)
-        key = self._key()
+        key = self.key()
         for i, ev in enumerate(evs):
             row_frame = ctk.CTkFrame(ev_list, fg_color=BG_CARD, corner_radius=8)
             row_frame.grid(row=i, column=0, sticky="ew", pady=2)
             row_frame.grid_columnconfigure(0, weight=1)
-            ctk.CTkLabel(row_frame, text=f"• {ev}", anchor="w",
-                         font=ctk.CTkFont(size=13)).grid(
+            ctk.CTkLabel(row_frame, text=f"• {ev}", anchor="w", font=ctk.CTkFont(size=13)).grid(
                 row=0, column=0, padx=10, pady=6, sticky="ew")
-            danger_btn(row_frame, "🗑",
-                       lambda k=key, idx=i: self._delete_event(k, idx)
-                       ).grid(row=0, column=1, padx=(0, 6))
+            danger_btn(row_frame, "🗑", lambda k=key, idx=i: self.delete_event(k, idx)).grid(row=0, column=1, padx=(0, 6))

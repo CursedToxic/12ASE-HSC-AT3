@@ -1,5 +1,6 @@
 import sys
 import customtkinter
+from pathlib import Path
 from datetime import datetime
 from event_planner import CalendarFrame
 from todo import TodoFrame
@@ -10,6 +11,8 @@ import animations
 
 # Variables
 app_name = "Locked In(c)."
+
+
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -79,7 +82,7 @@ class App(customtkinter.CTk):
     
         self.update_idletasks()
 
-    # ── Keybinds ──────────────────────────────────────────────────────────────
+    # ── Keybinds & Cursor ──────────────────────────────────────────────────────────────
 
     # Instructions from Claude: Set Keybinds using .bind()
     def setup_keybinds(self):
@@ -436,10 +439,17 @@ class App(customtkinter.CTk):
                 ("📅\nCalendar",   ("#e1bee7", "#2a1a47"), self.show_calendar),
             ]
 
+            # Configure Cursor
+            if sys.platform == "darwin":
+                cursor = "hand"
+
+            else:
+                cursor = "hand2"
+
             # Create empty list for cards 
             widgets, widget_colors = [], []
             for col, (label, color, cmd) in enumerate(functions):
-                card = customtkinter.CTkFrame(panel_frame, fg_color=color, corner_radius=12, cursor="hand")
+                card = customtkinter.CTkFrame(panel_frame, fg_color=color, corner_radius=12, cursor=cursor)
                 card.grid(row=0, column=col, padx=6, pady=6, sticky="nsew")
                 card.grid_rowconfigure(0, weight=1)
                 card.grid_columnconfigure(0, weight=1)
