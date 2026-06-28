@@ -610,7 +610,7 @@ class App(customtkinter.CTk):
             login_btn.grid(row=1, column=0, padx=10, pady=10, sticky="n")
             
             # Register Button
-            register_btn = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.login)
+            register_btn = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.registration)
             register_btn.grid(row=2, column=0, padx=10, pady=10, sticky="n")
 
             # Theme Button
