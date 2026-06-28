@@ -28,7 +28,7 @@ Note: I'm on MacOS so there is no .exe file
 To run this program, you need to install the following dependencies:
 
 - `customtkinter` for the main window.
-- `random` for random enemy spawnpoints
+- `random` for the flashcards.
 
 ### Install dependencies
 To install the required dependencies, you can run:
