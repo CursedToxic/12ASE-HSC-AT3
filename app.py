@@ -1,43 +1,16 @@
 import sys
-import json
-import hashlib
 import customtkinter
-from pathlib import Path
 from datetime import datetime
-from json import JSONDecodeError
-from event_planner import CalendarFrame
+from calendar import CalendarFrame
 from todo import TodoFrame
 from notes import NotesFrame
 from flashcards import FlashcardsFrame
 from settings import SettingsFrame
+from encryption import *
 import animations
 
 # Variables
 app_name = "Locked In(c)."
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def load_users(path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not path.exists() or path.stat().st_size == 0:
-        path.write_text('{"users": {}}')
-
-    try:
-        with open(path, "r") as f:
-            data = json.load(f)
-            if "users" not in data:
-                data["users"] = {}
-            return data
-    except JSONDecodeError:
-        return {"users": {}}
-
-
-def save_users(path: Path, data):
-    with open(path, "w") as f:
-        json.dump(data, f, indent=4)
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -66,14 +39,14 @@ class App(customtkinter.CTk):
             self, divisor=20, min_size=18, max_size=42)
         self.greeting_font = animations.responsive_font(
             self, weight="bold", divisor=30, min_size=16, max_size=38)
+        
+        # Establish default values for clock, history and login state
         self.clock_job  = None
         self.history    = []
         self.logged_in  = False
 
-        self.ui_title = customtkinter.CTkLabel(
-            self, text=app_name, font=self.responsive_font,
-            fg_color="transparent"
-        )
+        # Display the Title
+        self.ui_title = customtkinter.CTkLabel(self, text=app_name, font=self.responsive_font, fg_color="transparent")
         self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
         # Create and Display a Login Button
@@ -84,17 +57,11 @@ class App(customtkinter.CTk):
         
         # Theme button: Outsourcing from Claude
         self.theme_btn = customtkinter.CTkButton(
-            self,
-            text="☀" if self.settings["appearance"] == "Dark" else "🌙",
-            width=36, height=36, corner_radius=18,
-            fg_color="transparent", border_width=1,
-            border_color=("gray70", "gray30"),
-            text_color=("gray30", "gray70"),
-            hover_color=("gray85", "gray20"),
-            command=lambda: self.toggle_theme(self.theme_btn)
-        )
+            self, text="☀" if self.settings["appearance"] == "Dark" else "🌙", width=36, height=36, corner_radius=18, fg_color="transparent", border_width=1,
+            border_color=("gray70", "gray30"), text_color=("gray30", "gray70"), hover_color=("gray85", "gray20"), command=lambda: self.toggle_theme(self.theme_btn))
         self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
+        # Call the function to setup keybinds
         self.setup_keybinds()
 
     def toggle_theme(self, btn):
@@ -163,32 +130,63 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.geometry(geo)
 
+    def go_to_title(self):
+        # ChatGPT instructed me to create this function
+        # Reset History & Login State
+        self.logged_in = False
+        self.history.clear()
+
+        def build():
+            self.clear()
+
+            # Reconfigure rows (reset layout)
+            self.grid_columnconfigure(0, weight=1)
+            self.grid_rowconfigure(0, weight=3)
+            self.grid_rowconfigure(1, weight=0)
+            self.grid_rowconfigure(2, weight=1)
+
+            # Title
+            self.ui_title = customtkinter.CTkLabel(self, text=app_name, font=self.responsive_font, fg_color="transparent")
+            self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
+
+            # Login button
+            customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login).grid(row=1, column=0, padx=10, pady=10, sticky="n")
+
+            # Register button
+            customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.registration).grid(row=2, column=0, padx=10, pady=10, sticky="n")
+
+            # Theme button
+            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+
+        build()
+
     def registration(self):
         def build():
             self.clear()
 
+            # Configure Rows
             self.grid_rowconfigure(0, weight=1)
-            self.grid_rowconfigure(8, weight=1)
+            self.grid_rowconfigure(9, weight=1)
 
-            customtkinter.CTkLabel(self, text="Register", font=self.login_font).grid(
-                row=1, column=0, pady=(0, 10))
+            # Title of Screen
+            customtkinter.CTkLabel(self, text="Register", font=self.login_font).grid(row=1, column=0, pady=(0, 10))
 
+            # Create & Display Username and Password Entry Fields
             username_label = customtkinter.CTkLabel(self, text="Username")
             username_entry = customtkinter.CTkEntry(self, font=("Helvetica", 12), width=220)
             username_label.grid(row=2, column=0, pady=0)
             username_entry.grid(row=3, column=0, pady=6)
 
             password_label = customtkinter.CTkLabel(self, text="Password")
-            password_entry = customtkinter.CTkEntry(
-                self, font=("Helvetica", 12), show="*", width=220)
+            password_entry = customtkinter.CTkEntry(self, font=("Helvetica", 12), show="*", width=220)
             password_label.grid(row=5, column=0, pady=0)
             password_entry.grid(row=6, column=0, pady=6)
 
-            inv_user_label = customtkinter.CTkLabel(
-                self, text="", text_color="red")
-            
+            # Create a label for invalid username, text will be configured later
+            inv_user_label = customtkinter.CTkLabel(self, text="", text_color="red")
             inv_pwd_label = customtkinter.CTkLabel(self, text="", text_color="red")
 
+            # File path for registration: ChatGPT helped me come to this solution
             registration_file_path = Path(__file__).parent / "files/priv/creds.json"
 
             def check_registration():
@@ -257,9 +255,14 @@ class App(customtkinter.CTk):
             # Keybinds to move to next field
             username_entry.bind("<Tab>", lambda _: password_entry.focus())
             password_entry.bind("<Return>",  lambda _: check_registration())
-
+            
+            # Register Button to create an account
             register_button = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=check_registration)
-            register_button.grid(row=8, column=0, pady=16)
+            register_button.grid(row=8, column=0, padx=10, pady=(16,10), sticky="n")
+
+            # Back Button to return to title screen
+            back_button = customtkinter.CTkButton(self, text="Back", corner_radius=50, command=self.go_to_title)
+            back_button.grid(row=9, column=0, padx=10, pady=10, sticky="n")
             
             # I had to learn this. This inserts the element into the desired position, without the constraints of a grid.
             # Relative coordinates ensure that when the window is being scaled, the button always stays in the same place.
@@ -277,11 +280,10 @@ class App(customtkinter.CTk):
 
             # Reconfigure rows
             self.grid_rowconfigure(0, weight=1)
-            self.grid_rowconfigure(8, weight=1)
+            self.grid_rowconfigure(9, weight=1)
 
             # Login screen title
-            customtkinter.CTkLabel(self, text="Login", font=self.login_font).grid(
-                row=1, column=0, pady=(0, 10))
+            customtkinter.CTkLabel(self, text="Login", font=self.login_font).grid(row=1, column=0, pady=(0, 10))
 
             # Username text & entry
             username_label = customtkinter.CTkLabel(self, text="Username")
@@ -291,8 +293,7 @@ class App(customtkinter.CTk):
 
             # Password text & entry
             password_label = customtkinter.CTkLabel(self, text="Password")
-            password_entry = customtkinter.CTkEntry(
-                self, font=("Helvetica", 12), show="*", width=220)
+            password_entry = customtkinter.CTkEntry(self, font=("Helvetica", 12), show="*", width=220)
             password_label.grid(row=5, column=0, pady=0)
             password_entry.grid(row=6, column=0, pady=6)
 
@@ -302,8 +303,10 @@ class App(customtkinter.CTk):
             # Invalid Password Message
             inv_pwd_label = customtkinter.CTkLabel(self, text="", text_color="red")
 
+            # Registration file to check
             registration_file_path = Path(__file__).parent / "files/priv/creds.json"
 
+            # ChatGPT instructed me to do this: extract data from users
             data = load_users(registration_file_path)
 
             def check_login():
@@ -351,12 +354,15 @@ class App(customtkinter.CTk):
 
             # Login Button
             login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=check_login)
-            login_button.grid(row=8, column=0, pady=16)
+            login_button.grid(row=8, column=0, padx=10, pady=(16,10), sticky="n")
+
+            # Back Button to return to title screen
+            back_button = customtkinter.CTkButton(self, text="Back", corner_radius=50, command=self.go_to_title)
+            back_button.grid(row=9, column=0, padx=10, pady=10, sticky="n")
 
             # Place the theme button so it always stays in the top right corner
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
             self.update_idletasks()
-
         build()
 
     def show_clock(self):
@@ -411,7 +417,10 @@ class App(customtkinter.CTk):
         build()
 
     def go_home(self):
+
+        # Clear History
         self.history.clear()
+        
         def build():
             self.clear()
 
@@ -574,23 +583,33 @@ class App(customtkinter.CTk):
         build()
 
     def logout(self):
+        # Reset Login State
         self.logged_in = False
+
+        # Reset History State
         self.history.clear()
+        
         def build():
             self.clear()
 
+            # Configure Rows
             self.grid_rowconfigure(0, weight=3)
-            self.grid_rowconfigure(1, weight=1)
+            self.grid_rowconfigure(1, weight=0)
+            self.grid_rowconfigure(2, weight=1)
 
+            # Title
             self.ui_title = customtkinter.CTkLabel(self, text=app_name, font=self.responsive_font, fg_color="transparent")
             self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
+            # Login Button
             login_btn = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login)
             login_btn.grid(row=1, column=0, padx=10, pady=10, sticky="n")
+            
+            # Register Button
+            register_btn = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.login)
+            register_btn.grid(row=2, column=0, padx=10, pady=10, sticky="n")
 
+            # Theme Button
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
         build()
-
-app = App()
-app.mainloop()

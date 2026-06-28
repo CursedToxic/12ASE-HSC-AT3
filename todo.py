@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from event_planner import PURPLE, PURPLE_HOVER, BG_CARD, primary_btn, danger_btn, scrollable
+from calendar import PURPLE, PURPLE_HOVER, BG_CARD, primary_btn, danger_btn, scrollable
 import animations
 
 

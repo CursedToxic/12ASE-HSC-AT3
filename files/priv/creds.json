@@ -2,6 +2,9 @@
     "users": {
         "Victor": {
             "password_hash": "c0bd1d61f4623aa83eb89896ab632ba7a5535e06e9ef942588dd6c0dda5c8442"
+        },
+        "Admin": {
+            "password_hash": "bad55a03799477b506efc757d00c868ce7a451460f03bd82041c668188d49f98"
         }
     }
 }
