@@ -1,4 +1,6 @@
 import sys
+import json
+from pathlib import Path
 import customtkinter as ctk
 from datetime import datetime
 
@@ -9,6 +11,10 @@ SIDEBAR_W     = 200
 PREVIEW_CHARS = 120
 WRAP          = 160
 
+notes_folder = Path(__file__).parent / "files" / "notes"
+notes_folder.mkdir(parents=True, exist_ok=True)
+
+SAVE_FILE = "files/notes/notes.json"
 
 class NotesFrame(ctk.CTkFrame):
     def __init__(self, master):
@@ -19,8 +25,9 @@ class NotesFrame(ctk.CTkFrame):
         self.pages         = []
         self.current       = None
         self.view          = "gallery"
-        self._gallery_cards = []
+        self.gallery_cards = []
 
+        self.load_pages()
         self.build_sidebar()
         self.build_main()
         self.refresh_sidebar()
@@ -29,8 +36,8 @@ class NotesFrame(ctk.CTkFrame):
 
     def bind_keys(self):
         root = self.winfo_toplevel()
-        self._kb_new = root.bind("<Control-n>", lambda _: self.new_page(), add="+")
-        self._kb_del = root.bind("<Control-d>", lambda _: self.delete_page(), add="+")
+        self.kb_new = root.bind("<Control-n>", lambda _: self.new_page(), add="+")
+        self.kb_del = root.bind("<Control-d>", lambda _: self.delete_page(), add="+")
         if sys.platform == "darwin":
             self._kb_new_mac = root.bind("<Command-n>", lambda _: self.new_page(), add="+")
             self._kb_del_mac = root.bind("<Command-d>", lambda _: self.delete_page(), add="+")
@@ -40,8 +47,8 @@ class NotesFrame(ctk.CTkFrame):
         if e.widget is not self:
             return
         root = self.winfo_toplevel()
-        root.unbind("<Control-n>", self._kb_new)
-        root.unbind("<Control-d>", self._kb_del)
+        root.unbind("<Control-n>", self.kb_new)
+        root.unbind("<Control-d>", self.kb_del)
         if sys.platform == "darwin":
             root.unbind("<Command-n>", self._kb_new_mac)
             root.unbind("<Command-d>", self._kb_del_mac)
@@ -130,6 +137,13 @@ class NotesFrame(ctk.CTkFrame):
 
     # ── Gallery view ──────────────────────────────────────────────────────────
 
+    def load_pages(self):
+        try:
+            with open(SAVE_FILE, "r") as f:
+                self.pages = json.load(f)
+        except FileNotFoundError:
+            self.pages = []
+
     def show_gallery(self):
         self.save_current()
         self.view = "gallery"
@@ -163,7 +177,7 @@ class NotesFrame(ctk.CTkFrame):
         for c in range(COLS):
             scroll.grid_columnconfigure(c, weight=1)
 
-        self._gallery_cards = [
+        self.gallery_cards = [
             self.make_card(scroll, i, page, COLS)
             for i, page in enumerate(self.pages)
         ]
@@ -207,7 +221,7 @@ class NotesFrame(ctk.CTkFrame):
 
     def select_card(self, idx):
         self.current = idx
-        for j, card in enumerate(self._gallery_cards):
+        for j, card in enumerate(self.gallery_cards):
             card.configure(border_width=2 if j == idx else 0)
         self.refresh_sidebar()
 
@@ -232,12 +246,9 @@ class NotesFrame(ctk.CTkFrame):
         self.title_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         self.title_entry.bind("<KeyRelease>", self.on_title_change)
 
-        ctk.CTkButton(toolbar, text="🗑 Delete", width=88, height=36,
-                      fg_color="transparent",
-                      border_width=1, border_color=("gray70", "gray35"),
-                      text_color=("#A32D2D", "#F09595"),
-                      hover_color=("gray85", "gray20"),
-                      command=self.delete_page).grid(row=0, column=1)
+        ctk.CTkButton(toolbar, text="🗑 Delete", width=88, height=36, fg_color="transparent",
+                      border_width=1, border_color=("gray70", "gray35"), text_color=("#A32D2D", "#F09595"),
+                      hover_color=("gray85", "gray20"), command=self.delete_page).grid(row=0, column=2)
 
         self.meta_label = ctk.CTkLabel(
             self.main, text="", anchor="w",
@@ -256,6 +267,7 @@ class NotesFrame(ctk.CTkFrame):
         now = datetime.now().strftime("%d %b %Y, %I:%M %p")
         self.pages.append({"title": "Untitled", "body": "", "created": now})
         self.open_page(len(self.pages) - 1)
+        self.save_all()
 
     def open_page(self, idx):
         self.save_current()
@@ -285,13 +297,15 @@ class NotesFrame(ctk.CTkFrame):
         self.current = None
         self.refresh_sidebar()
         self.show_gallery()
+        self.save_all()
 
     def on_title_change(self, _=None):
         if self.current is None:
             return
         self.pages[self.current]["title"] = (
             self.title_entry.get().strip() or "Untitled")
-        self._refresh_sidebar()
+        self.refresh_sidebar()
+        self.save_all()
 
     def on_body_change(self, _=None):
         if self.current is None:
@@ -299,11 +313,15 @@ class NotesFrame(ctk.CTkFrame):
         self.pages[self.current]["body"] = (
             self.body_box.get("0.0", "end").rstrip("\n"))
         self.update_meta()
+        self.save_all()
 
     def update_meta(self):
         if self.current is None:
             return
         page  = self.pages[self.current]
+        filename = f"{page['title']}.txt"
+        note_file = notes_folder / filename
+        note_file.write_text(page["body"])
         words = len(page["body"].split()) if page["body"].strip() else 0
         self.meta_label.configure(
             text=f"Created {page['created']}  •  "
@@ -317,8 +335,10 @@ class NotesFrame(ctk.CTkFrame):
             self.editor_btn.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
             self.gallery_btn.configure(fg_color="transparent")
 
-
-# ── Standalone runner ─────────────────────────────────────────────────────────
+    # Define a function to save the note
+    def save_all(self):
+        with open(SAVE_FILE, "w") as f:
+            json.dump(self.pages, f, indent=2)
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("Dark")

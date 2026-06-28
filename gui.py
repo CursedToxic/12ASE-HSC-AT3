@@ -1,7 +1,10 @@
 import sys
+import json
+import hashlib
 import customtkinter
 from pathlib import Path
 from datetime import datetime
+from json import JSONDecodeError
 from event_planner import CalendarFrame
 from todo import TodoFrame
 from notes import NotesFrame
@@ -12,7 +15,29 @@ import animations
 # Variables
 app_name = "Locked In(c)."
 
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
+
+def load_users(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not path.exists() or path.stat().st_size == 0:
+        path.write_text('{"users": {}}')
+
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+            if "users" not in data:
+                data["users"] = {}
+            return data
+    except JSONDecodeError:
+        return {"users": {}}
+
+
+def save_users(path: Path, data):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -52,7 +77,7 @@ class App(customtkinter.CTk):
         self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
         # Create and Display a Login Button
-        login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login_system).grid(row=1, column=0, padx=10, pady=10, sticky="n")
+        login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login).grid(row=1, column=0, padx=10, pady=10, sticky="n")
 
         # Create and Display a button for registraion
         register_button = customtkinter.CTkButton(self, text="Register",  corner_radius=50, command=self.registration).grid(row=2, column=0, padx=10, pady=10, sticky="n")
@@ -72,8 +97,6 @@ class App(customtkinter.CTk):
 
         self.setup_keybinds()
 
-    # ── Theming ───────────────────────────────────────────────────────────────
-
     def toggle_theme(self, btn):
         new_mode = "Light" if self.settings["appearance"] == "Dark" else "Dark"
         self.settings["appearance"] = new_mode
@@ -81,8 +104,6 @@ class App(customtkinter.CTk):
         btn.configure(text="☀" if new_mode == "Dark" else "🌙")
     
         self.update_idletasks()
-
-    # ── Keybinds & Cursor ──────────────────────────────────────────────────────────────
 
     # Instructions from Claude: Set Keybinds using .bind()
     def setup_keybinds(self):
@@ -112,10 +133,12 @@ class App(customtkinter.CTk):
             self.bind("<Command-h>", lambda _: self.go_home() if self.logged_in else None)
         self.bind("<Escape>", lambda _: self.go_back())
 
+    # ChatGPT heped me debug, the reason for the second brackets is to actually navigate back rather than simply removing from a list.
     def go_back(self):
         if self.history:
             self.history.pop()()
 
+    # Instructions from Claude: Bind the tab key to an event
     def tab_navigate(self, e):
         focused = self.focus_get()
         if isinstance(focused, (customtkinter.CTkEntry, customtkinter.CTkTextbox)):
@@ -123,8 +146,6 @@ class App(customtkinter.CTk):
         self.tab_index = (self.tab_index + 1) % len(self.tab_sections)
         self.tab_sections[self.tab_index]()
         return "break"
-
-    # ── Clear helpers ─────────────────────────────────────────────────────────
 
     # Instructions from Claude: Remove all elements using .destroy()
     def clear(self, num_rows=10):
@@ -142,9 +163,114 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.geometry(geo)
 
-    # ── Login screen ──────────────────────────────────────────────────────────
+    def registration(self):
+        def build():
+            self.clear()
 
-    def login_system(self):
+            self.grid_rowconfigure(0, weight=1)
+            self.grid_rowconfigure(8, weight=1)
+
+            customtkinter.CTkLabel(self, text="Register", font=self.login_font).grid(
+                row=1, column=0, pady=(0, 10))
+
+            username_label = customtkinter.CTkLabel(self, text="Username")
+            username_entry = customtkinter.CTkEntry(self, font=("Helvetica", 12), width=220)
+            username_label.grid(row=2, column=0, pady=0)
+            username_entry.grid(row=3, column=0, pady=6)
+
+            password_label = customtkinter.CTkLabel(self, text="Password")
+            password_entry = customtkinter.CTkEntry(
+                self, font=("Helvetica", 12), show="*", width=220)
+            password_label.grid(row=5, column=0, pady=0)
+            password_entry.grid(row=6, column=0, pady=6)
+
+            inv_user_label = customtkinter.CTkLabel(
+                self, text="", text_color="red")
+            
+            inv_pwd_label = customtkinter.CTkLabel(self, text="", text_color="red")
+
+            registration_file_path = Path(__file__).parent / "files/priv/creds.json"
+
+            def check_registration():
+                # ChatGPT instructed me for the implementation of multiple user accounts
+                data = load_users(registration_file_path)
+                
+                user = username_entry.get()
+                self.username = user
+                password = password_entry.get()
+
+                # Followed AI's instructions to optimise the criteria
+                invalid_usr = (not user.isalnum() or len(user) < 2 or user in data["users"])        
+
+                if invalid_usr:
+                    # Check if Username Already Exits
+                    if user in data["users"]:
+                        inv_user_label.configure(text="Username already exists")
+                        inv_user_label.grid(row=4, column=0)
+
+                    # Check if Username contains special characters
+                    elif not user.isalnum():
+                        inv_user_label.configure(text="Username must be alphanumeric")
+                        inv_user_label.grid(row=4, column=0)
+
+                    # Check if Username is less than two characters long
+                    elif len(user) < 2:
+                        inv_user_label.configure(text="Username must be at least 2 characters")
+                        inv_user_label.grid(row=4, column=0)                            
+
+                else:
+                    # Remove Message when valid
+                    inv_user_label.grid_remove()
+
+                # Password validation: ChatGPT suggested this as a cleaner approach
+                # Assume password is valid
+                error_msg = None
+
+                # Check for each case where password would be invalid
+                if "<" in password or ">" in password:
+                    error_msg = "Must not contain '<' or '>'"
+
+                elif len(password) < 8:
+                    error_msg = "Must be at least 8 characters"
+
+                elif password.isalnum():
+                    error_msg = "Must contain at least one special character"
+
+                # If the password is invalid, display the appropriate error message
+                # Then set the invalid password tag to true to indicate an invalid password attempt
+                if error_msg:
+                    inv_pwd_label.configure(text=error_msg)
+                    inv_pwd_label.grid(row=7, column=0)
+                    invalid_pwd = True
+
+                # Otherwise, remove the invalid password text if it was previously displayed
+                else:
+                    inv_pwd_label.grid_remove()
+                    invalid_pwd = False
+
+                # If both username and password are valid, display the next screen
+                if not invalid_usr and invalid_pwd == False:
+                    data["users"][user] = {"password_hash": hash_password(password)}
+                    save_users(registration_file_path, data)
+                    self.show_clock()
+            
+            # Keybinds to move to next field
+            username_entry.bind("<Tab>", lambda _: password_entry.focus())
+            password_entry.bind("<Return>",  lambda _: check_registration())
+
+            register_button = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=check_registration)
+            register_button.grid(row=8, column=0, pady=16)
+            
+            # I had to learn this. This inserts the element into the desired position, without the constraints of a grid.
+            # Relative coordinates ensure that when the window is being scaled, the button always stays in the same place.
+            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+
+            # Refresh app
+            self.update_idletasks()
+
+        build()
+    
+    def login(self):
         def build():
             # Clear screen
             self.clear()
@@ -171,160 +297,67 @@ class App(customtkinter.CTk):
             password_entry.grid(row=6, column=0, pady=6)
 
             # Invalid Username Message
-            inv_user_label = customtkinter.CTkLabel(self, text="Invalid Username: Must be Alphanumeric", text_color="red")
+            inv_user_label = customtkinter.CTkLabel(self, text="", text_color="red")
 
             # Invalid Password Message
             inv_pwd_label = customtkinter.CTkLabel(self, text="", text_color="red")
 
-            # Error Handling: Invalid detail format
-            inv_details = customtkinter.CTkLabel(self, text="Invalid Username or Password format.")
+            registration_file_path = Path(__file__).parent / "files/priv/creds.json"
+
+            data = load_users(registration_file_path)
 
             def check_login():
+                    # Followed ChatGPT's instructions to optimise the criteria
+                    # ChatGPT instructed me for the password hashing
+
                     user = username_entry.get()
-
                     self.username = user
-
                     password = password_entry.get()
 
-                    # Gemini gave instructions and helped debug here. This enabled me to imporve percieved program responsiveness.
+                    valid_usr = False
+                    valid_pwd = False
 
-                    # Followed AI's instructions to optimise the criteria
-                    invalid_usr = (not user.isalnum() or len(user) < 2)
-                    invalid_pwd = (len(password) < 8 or "<" in password or ">" in password or password.isalnum())
-
-                    if invalid_usr:
-                        # Display Invalid User Message
+                    # Check whether the username exists.
+                    if user not in data["users"]:
+                        inv_user_label.configure(text="Username Does Not Exist")
                         inv_user_label.grid(row=4, column=0)
-
+                        return
+                    
                     else:
                         # Remove Message when valid
                         inv_user_label.grid_remove()
+                        valid_usr = not valid_usr
 
-                    if invalid_pwd:
-                        if "<" in password or ">" in password:
-                            error_msg = "Must not contain '<' or '>'"
+                    # Identify stored encrypted password
+                    stored_hash = data["users"][user]["password_hash"]                    
 
-                        elif len(password) < 8:
-                            error_msg = "Must be more than 8 characters"
-                        
-                        elif password.isalnum():
-                            error_msg = "Must not be alphanumeric"
-
-                        # ChatGPT helped me debug this
-                        # Configure the input message within the check_login function to remove potential issues where error_msg is defined
-                        inv_pwd_label.configure(text=f"Invalid Password: {error_msg}")
-
-                        # Display the error message
+                    # Check stored hash against the encrypted password
+                    if hash_password(password) != stored_hash:
+                        inv_pwd_label.configure(text="Wrong password")
                         inv_pwd_label.grid(row=7, column=0)
-
+                        return
+                    
                     else:
-                        # Remove Message when valid
                         inv_pwd_label.grid_remove()
-
-                    if not invalid_usr and not invalid_pwd:
+                        valid_pwd = not valid_pwd
+                    
+                    # If both the user and password are valid show the next page
+                    if valid_usr and valid_pwd:
                         self.show_clock()
 
-            username_entry.bind("<Return>", lambda _: password_entry.focus())
+            # Keyboard Navigation for login screen
+            username_entry.bind("<Tab>", lambda _: password_entry.focus())
             password_entry.bind("<Return>",  lambda _: check_login())
 
-            submit_btn = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=check_login)
-            submit_btn.grid(row=8, column=0, pady=16)
-            # animations.click_pulse(submit_btn)
+            # Login Button
+            login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=check_login)
+            login_button.grid(row=8, column=0, pady=16)
 
+            # Place the theme button so it always stays in the top right corner
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
             self.update_idletasks()
 
         build()
-
-    # ── Registration ──────────────────────────────────────────────────────────
-
-    def registration(self):
-        def build():
-            self.clear()
-
-            self.grid_rowconfigure(0, weight=1)
-            self.grid_rowconfigure(8, weight=1)
-
-            customtkinter.CTkLabel(self, text="Register", font=self.login_font).grid(
-                row=1, column=0, pady=(0, 10))
-
-            username_label = customtkinter.CTkLabel(self, text="Username")
-            username_entry = customtkinter.CTkEntry(self, font=("Helvetica", 12), width=220)
-            username_label.grid(row=2, column=0, pady=0)
-            username_entry.grid(row=3, column=0, pady=6)
-
-            password_label = customtkinter.CTkLabel(self, text="Password")
-            password_entry = customtkinter.CTkEntry(
-                self, font=("Helvetica", 12), show="*", width=220)
-            password_label.grid(row=5, column=0, pady=0)
-            password_entry.grid(row=6, column=0, pady=6)
-
-            inv_user_label = customtkinter.CTkLabel(
-                self, text="Username must be Alphanumeric", text_color="red")
-            
-            inv_pwd_label = customtkinter.CTkLabel(self, text="", text_color="red")
-
-            def check_registration():
-                user = username_entry.get()
-
-                self.username = user
-
-                password = password_entry.get()
-
-                # Gemini gave instructions and helped debug here. This enabled me to improve perceived program responsiveness.
-
-                # Followed AI's instructions to optimise the criteria
-                invalid_usr = (not user.isalnum() or len(user) < 2)
-
-                # Set invalid_pwd to be true
-                invalid_pwd = True
-
-                if invalid_usr:
-                    # Display Invalid User Message
-                    inv_user_label.grid(row=4, column=0)
-
-                else:
-                    # Remove Message when valid
-                    inv_user_label.grid_remove()
-
-                if "<" in password or ">" in password:
-                    error_msg = "Must not contain '<' or '>'"
-
-                elif len(password) < 8:
-                    error_msg = "Must be more than 8 characters"
-                        
-                elif password.isalnum():
-                    error_msg = "Must not be alphanumeric"
-
-                    # ChatGPT helped me debug this
-                    # Configure the input message within the check_login function to remove potential issues where error_msg is defined
-                    inv_pwd_label.configure(text=f"Invalid Password: {error_msg}")
-
-                    # Display the error message
-                    inv_pwd_label.grid(row=7, column=0)
-
-                else:
-                    # Remove Message when valid
-                    invalid_pwd = not invalid_pwd
-                    inv_pwd_label.grid_remove()
-
-                if not invalid_usr and not invalid_pwd:
-                    self.show_clock()
-
-            username_entry.bind("<Return>", lambda _: password_entry.focus())
-            password_entry.bind("<Return>",  lambda _: check_registration())
-
-            submit_btn = customtkinter.CTkButton(
-                self, text="Register", corner_radius=50, command=check_registration)
-            submit_btn.grid(row=8, column=0, pady=16)
-            
-            # I had to learn this. This inserts the element into the desired position, without the constraints of a grid.
-            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
-            self.update_idletasks()
-
-        build()
-
-    # ── Clock screen ──────────────────────────────────────────────────────────
 
     def show_clock(self):
         self.logged_in = True
@@ -377,13 +410,12 @@ class App(customtkinter.CTk):
             tick()
         build()
 
-    # ── Home screen ───────────────────────────────────────────────────────────
-
     def go_home(self):
         self.history.clear()
         def build():
             self.clear()
 
+            # Configure rows for the home screen interface
             self.grid_rowconfigure(0, weight=0)
             self.grid_rowconfigure(1, weight=0)
             self.grid_rowconfigure(2, weight=0)
@@ -391,6 +423,7 @@ class App(customtkinter.CTk):
             self.grid_rowconfigure(4, weight=1)
             self.grid_rowconfigure(5, weight=0)
 
+            # Use datetime to obtain the hour data and output difference greetings based on the time
             hour = datetime.now().hour
             if hour < 12:
                 greeting = f"🌤 Good Morning, {self.username}"
@@ -414,10 +447,13 @@ class App(customtkinter.CTk):
             clock_strip = customtkinter.CTkLabel(self, text="", font=clock_strip_font, text_color="gray55", fg_color="transparent")
             clock_strip.grid(row=1, column=0, pady=(0, 18))
 
-            # Display Date and Time
+            # Display Date and Time based on Actual Date and Time
             def tick_strip():
+                # Obtain current datetime
                 now = datetime.now()
+                # Configure the text to display datetime (including AM/PM)
                 clock_strip.configure(text=now.strftime("%A, %B %d  •  %I:%M:%S %p"))
+                # Update after 1000ms(1s)
                 self.clock_job = self.after(1000, tick_strip)
 
             tick_strip()
@@ -549,7 +585,7 @@ class App(customtkinter.CTk):
             self.ui_title = customtkinter.CTkLabel(self, text=app_name, font=self.responsive_font, fg_color="transparent")
             self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
-            login_btn = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login_system)
+            login_btn = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login)
             login_btn.grid(row=1, column=0, padx=10, pady=10, sticky="n")
 
             self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
