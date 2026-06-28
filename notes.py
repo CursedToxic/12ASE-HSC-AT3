@@ -235,32 +235,43 @@ class NotesFrame(ctk.CTkFrame):
             ctk.CTkLabel(self.main, text="No notes yet — hit '+ New Note' to get started", text_color=("gray40", "gray65")).grid(row=1, column=0, pady=60)
             return
 
+        # Scrollable container that holds all gallery cards
         notes_scoll = ctk.CTkScrollableFrame(self.main, fg_color="transparent")
         notes_scoll.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
 
         COLS = 3
+        # Give each column equal weight so cards stretch to fill the width
         for c in range(COLS):
             notes_scoll.grid_columnconfigure(c, weight=1)
 
+        # Build one card widget per note and store references for later updates
         self.gallery_cards = [
             self.make_card(notes_scoll, i, page, COLS)
             for i, page in enumerate(self.notes)
         ]
 
     def make_card(self, parent, i, page, cols):
+        # Dark card frame; pointer cursor signals it is clickable
+        # Purple border on the currently selected card, none otherwise
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12,
                             cursor="hand2",
                             border_width=2 if i == self.current else 0,
                             border_color=PURPLE)
+        # Place card in the correct row/column using integer division and modulo
         card.grid(row=i // cols, column=i % cols, padx=6, pady=6, sticky="nsew")
         card.grid_columnconfigure(0, weight=1)
+        # Prevent rows from growing taller than their content
         parent.grid_rowconfigure(i // cols, weight=0)
 
+        # Truncate the body to the preview character limit
         preview = page["body"][:PREVIEW_CHARS].strip() or "Empty page"
+        # Add an ellipsis if the body was cut short
         if len(page["body"]) > PREVIEW_CHARS:
             preview += "…"
+        # Count words only when the body has non-whitespace content
         words = len(page["body"].split()) if page["body"].strip() else 0
 
+        # Each entry is (display text, label keyword args including a custom pady key)
         rows = [
             (page["title"] or "Untitled",
              dict(font=ctk.CTkFont(size=13, weight="bold"),
@@ -274,24 +285,28 @@ class NotesFrame(ctk.CTkFrame):
                   text_color=("gray65", "gray55"), anchor="w", pady=(0, 10))),
         ]
         for row, (text, kw) in enumerate(rows):
+            # Pop pady before passing kw to CTkLabel (it is not a valid CTkLabel param)
             pady = kw.pop("pady")
             ctk.CTkLabel(card, text=text, wraplength=WRAP, **kw).grid(
                 row=row, column=0, padx=12, pady=pady, sticky="ew")
 
+        # Bind clicks on the card frame and all its child labels
         for w in [card] + list(card.winfo_children()):
+            # Single click selects the card (highlights border)
             w.bind("<Button-1>",        lambda _, idx=i: self.select_card(idx))
+            # Double click opens the note in the editor
             w.bind("<Double-Button-1>", lambda _, idx=i: self.open_page(idx))
 
         return card
 
     def select_card(self, idx):
+        # Track which card is selected
         self.current = idx
+        # Redraw all card borders: only the selected one gets a purple outline
         for j, card in enumerate(self.gallery_cards):
             card.configure(border_width=2 if j == idx else 0)
         self.refresh_sidebar()
 
-
-    
     # ChatGPT instructed me for this function: it loads the page
     def load_pages(self):
         # If note exists, load note, otherwise, create blank note
@@ -302,8 +317,10 @@ class NotesFrame(ctk.CTkFrame):
             self.notes = []
 
     def new_page(self):
+        # Timestamp string shown in the editor footer
         now = datetime.now().strftime("%d %b %Y, %I:%M %p")
 
+        # Append a blank note with a unique ID and the current timestamp
         self.notes.append({
             "id": str(uuid.uuid4()),
             "title": "Untitled",
@@ -311,58 +328,80 @@ class NotesFrame(ctk.CTkFrame):
             "created": now
         })
 
+        # Persist so the new note survives a crash before editing begins
         self.save_pages()
+        # Open the note that was just added (last in the list)
         self.open_page(len(self.notes) - 1)
 
     def open_page(self, idx):
+        # Flush any unsaved edits from the previously open note
         self.save_current()
+        # Track which note is currently being edited
         self.current = idx
+        # Switch the right panel to editor layout
         self.build_editor_view()
         page = self.notes[idx]
+        # Clear stale content before inserting the new note's title
         self.title_entry.delete(0, "end")
         self.title_entry.insert(0, page["title"])
+        # Clear stale content before inserting the new note's body
         self.body_box.delete("0.0", "end")
         self.body_box.insert("0.0", page["body"])
+        # Refresh the word count and created-date footer
         self.update_data()
+        # Highlight the active note in the sidebar
         self.refresh_sidebar()
 
     def delete_page(self):
+        # Nothing to delete if no note is open
         if self.current is None:
             return
 
         self.notes.pop(self.current)
         self.save_pages()
 
+        # No note is open after deletion
         self.current = None
         self.refresh_sidebar()
+        # Return to the gallery so the user sees the remaining notes
         self.show_gallery()
-    
+
     def on_title_change(self, _=None):
+        # Ignore keystrokes that fire before a note is open
         if self.current is None:
             return
 
+        # Fall back to "Untitled" if the field is cleared
         self.notes[self.current]["title"] = (self.title_entry.get().strip() or "Untitled")
 
+        # Update the sidebar card to reflect the new title immediately
         self.refresh_sidebar()
         self.save_pages()
 
     def on_body_change(self, _=None):
         if self.current is None:
             return
+        # Strip the trailing newline that CTkTextbox always appends
         self.notes[self.current]["body"] = (self.body_box.get("0.0", "end").rstrip("\n"))
+        # Recalculate word count shown in the footer
         self.update_data()
 
     def update_data(self):
         if self.current is None:
             return
         page  = self.notes[self.current]
+        # Derive the .txt filename from the note title
         filename = f"{page['title']}.txt"
         note_file = notes_folder / filename
+        # Mirror the body to a plain-text file for external access
         note_file.write_text(page["body"])
+        # Avoid counting whitespace-only content as words
         words = len(page["body"].split()) if page["body"].strip() else 0
+        # Update footer label with creation date and live word count
         self.data_label.configure(text=f"Created {page['created']}  •  " f"{words} word{'s' if words != 1 else ''}")
 
     def update_toggle_buttons(self):
+        # Highlight the active view button and reset the inactive one
         if self.view == "gallery":
             self.gallery_btn.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
             self.editor_btn.configure(fg_color="transparent")
@@ -371,31 +410,17 @@ class NotesFrame(ctk.CTkFrame):
             self.gallery_btn.configure(fg_color="transparent")
 
     def save_pages(self):
+        # Overwrite the JSON file with the current in-memory notes list
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(self.notes, f, indent=2)
 
     def save_current(self):
+            # Nothing to save if no note is open or the list has shrunk
             if self.current is None or self.current >= len(self.notes):
                 return
+            # Only read the widgets if the editor view has been built
             if self.view == "editor" and hasattr(self, "title_entry"):
                 self.notes[self.current]["title"] = (
                     self.title_entry.get().strip() or "Untitled")
                 self.notes[self.current]["body"] = (
                     self.body_box.get("0.0", "end").rstrip("\n"))
-
-# Enables this program to run as either a standalone app or part of a module.
-if __name__ == "__main__":
-    # Appearance & Colour
-    ctk.set_appearance_mode("Dark")
-    ctk.set_default_color_theme("blue")
-
-    root = ctk.CTk()
-    root.title("Notes")
-    root.geometry("860x580")
-    root.minsize(680, 420)
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_rowconfigure(0, weight=1)
-
-    # Insert the app frame
-    NotesFrame(root).grid(row=0, column=0, sticky="nsew")
-    root.mainloop()
