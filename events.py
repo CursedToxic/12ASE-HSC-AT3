@@ -1,12 +1,16 @@
 import sys
+import json
+from pathlib import Path
 import customtkinter as ctk
 import calendar
 from datetime import *
-import animations
 
 PURPLE       = "#534AB7"
 PURPLE_HOVER = "#3C3489"
 BG_CARD      = ("gray85", "gray20")
+
+EVENT_DIR = Path("files/events")
+EVENT_DIR.mkdir(exist_ok=True)
 
 def primary_btn(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=13), width=width)
@@ -18,13 +22,12 @@ def danger_btn(parent, text, command, width=32):
 def scrollable(parent):
     return ctk.CTkScrollableFrame(parent, fg_color="transparent")
 
-# ─── Calendar ─────────────────────────────────────────────────────────────────
-
 class CalendarFrame(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, corner_radius=0, fg_color="transparent")
 
-        self.events       = {}
+        self.events = {}
+        self.load_events()
         self.selected_date = None
         self.current_date = datetime.now()
 
@@ -46,13 +49,11 @@ class CalendarFrame(ctk.CTkFrame):
         if e.widget is not self:
             return
         root = self.winfo_toplevel()
-        root.unbind("<Left>",      self.left)
-        root.unbind("<Right>",     self.right)
+        root.unbind("<Left>", self.left)
+        root.unbind("<Right>", self.right)
         root.unbind("<Control-t>", self.today)
         if sys.platform == "darwin":
             root.unbind("<Command-t>", self.today_mac)
-
-    # ── helpers ───────────────────────────────────────────────────────────────
 
     def key(self, d=None):
         return (d or self.selected_date).strftime("%Y-%m-%d")
@@ -61,38 +62,24 @@ class CalendarFrame(ctk.CTkFrame):
         self.display_month()
         self.render_events()
 
-    # ── layout ────────────────────────────────────────────────────────────────
-
     def build_header(self):
-        hdr = ctk.CTkFrame(self, fg_color="transparent")
-        hdr.pack(fill="x", padx=20, pady=(16, 8))
-        hdr.grid_columnconfigure(1, weight=1)
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.pack(fill="x", padx=20, pady=(16, 8))
+        header.grid_columnconfigure(1, weight=1)
 
-        self.prev_btn = ctk.CTkButton(
-            hdr, text="◀", width=50,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            command=lambda: self.change_month(-1),
-            fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
+        self.prev_btn = ctk.CTkButton(header, text="◀", width=50, font=ctk.CTkFont(size=16, weight="bold"), command=lambda: self.change_month(-1),
+                                      fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
         self.prev_btn.grid(row=0, column=0, padx=(0, 10))
 
-        self.month_year_label = ctk.CTkLabel(
-            hdr, text="", font=ctk.CTkFont(size=20, weight="bold"))
+        self.month_year_label = ctk.CTkLabel(header, text="", font=ctk.CTkFont(size=20, weight="bold"))
         self.month_year_label.grid(row=0, column=1)
 
-        ctk.CTkButton(
-            hdr, text="Today", width=72,
-            font=ctk.CTkFont(size=13),
-            command=self.go_to_today,
-            fg_color="transparent", hover_color=("gray80", "gray25"),
-            border_width=1, border_color=("gray60", "gray40"),
-            corner_radius=12).grid(row=0, column=2, padx=(0, 8))
+        ctk.CTkButton(header, text="Today", width=72, font=ctk.CTkFont(size=13), command=self.go_to_today, fg_color="transparent", hover_color=("gray80", "gray25"),
+                      border_width=1, border_color=("gray60", "gray40"), corner_radius=12).grid(row=0, column=2, padx=(0, 8))
 
-        self.next_btn = ctk.CTkButton(
-            hdr, text="▶", width=50,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            command=lambda: self.change_month(1),
-            fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
-        self.next_btn.grid(row=0, column=3, padx=(0, 0))
+        self.next_button = ctk.CTkButton(header, text="▶", width=50, font=ctk.CTkFont(size=16, weight="bold"), command=lambda: self.change_month(1), 
+                                      fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=12)
+        self.next_button.grid(row=0, column=3, padx=(0, 0))
 
     def build_main(self):
         main = ctk.CTkFrame(self, fg_color="transparent")
@@ -111,14 +98,12 @@ class CalendarFrame(ctk.CTkFrame):
             self.calendar_frame.grid_rowconfigure(r, weight=1)
 
         for col, day in enumerate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]):
-            ctk.CTkLabel(self.calendar_frame, text=day, font=ctk.CTkFont(size=12, weight="bold"), text_color=("gray50", "gray55")).grid(
-                row=0, column=col, padx=2, pady=4, sticky="ew")
+            ctk.CTkLabel(self.calendar_frame, text=day, font=ctk.CTkFont(size=12, weight="bold"), text_color=("gray50", "gray55")).grid(row=0, column=col, padx=2, pady=4, sticky="ew")
 
         self.date_buttons = [
-            [ctk.CTkButton(self.calendar_frame, text="", font=ctk.CTkFont(size=13), fg_color=BG_CARD, hover_color=PURPLE_HOVER, corner_radius=8, command=lambda: None) 
-            for _ in range(7)]
-            for _ in range(6)
-        ]
+            [ctk.CTkButton(self.calendar_frame, text="", font=ctk.CTkFont(size=13), fg_color=BG_CARD, hover_color=PURPLE_HOVER, corner_radius=8, command=lambda: None) for _ in range(7)]
+            for _ in range(6)]
+        
         for r, week in enumerate(self.date_buttons):
             for c, btn in enumerate(week):
                 btn.grid(row=r + 1, column=c, padx=2, pady=2, sticky="nsew")
@@ -131,14 +116,12 @@ class CalendarFrame(ctk.CTkFrame):
 
         self.render_events()
 
-    # ── calendar rendering ────────────────────────────────────────────────────
-
     def display_month(self):
         self.month_year_label.configure(text=self.current_date.strftime("%B %Y"))
 
-        year  = self.current_date.year
+        year = self.current_date.year
         month = self.current_date.month
-        cal   = calendar.Calendar(firstweekday=6).monthdayscalendar(year, month)
+        cal = calendar.Calendar(firstweekday=6).monthdayscalendar(year, month)
         today = datetime.now()
 
         for week_idx in range(6):
@@ -152,22 +135,17 @@ class CalendarFrame(ctk.CTkFrame):
                     key      = self.key(date_obj)
                     is_today = (day == today.day and month == today.month
                                 and year == today.year)
-                    is_sel   = (self.selected_date is not None
+                    selected   = (self.selected_date is not None
                                 and self.key() == key)
-                    fg = PURPLE if is_today else (PURPLE_HOVER if is_sel else BG_CARD)
-                    btn.configure(
-                        text=f"{day}\n●" if self.events.get(key) else str(day),
-                        state="normal", fg_color=fg,
-                        border_width=2 if is_sel else 0,
-                        border_color=PURPLE,
-                        command=lambda d=date_obj: self.select_date(d))
-
-    # ── navigation ────────────────────────────────────────────────────────────
+                    fg = PURPLE if is_today else (PURPLE_HOVER if selected else BG_CARD)
+                    btn.configure(text=f"{day}\n●" if self.events.get(key) else str(day), state="normal", fg_color=fg, border_width=2 if selected else 0, border_color=PURPLE,
+                                  command=lambda d=date_obj: self.select_date(d))
 
     def change_month(self, delta):
         m = self.current_date.month + delta
         y = self.current_date.year + (m - 1) // 12
         self.current_date = self.current_date.replace(year=y, month=(m - 1) % 12 + 1)
+        self.save_events()
         self.refresh()
 
     def go_to_today(self):
@@ -179,14 +157,13 @@ class CalendarFrame(ctk.CTkFrame):
         self.selected_date = date_obj
         self.refresh()
 
-    # ── event actions ─────────────────────────────────────────────────────────
-
     def add_event(self):
-        text = self.ev_entry.get().strip()
+        text = self.event_entry.get().strip()
         if not text or not self.selected_date:
             return
         self.events.setdefault(self.key(), []).append(text)
-        self.ev_entry.delete(0, "end")
+        self.event_entry.delete(0, "end")
+        self.save_events() 
         self.refresh()
         
 
@@ -194,9 +171,8 @@ class CalendarFrame(ctk.CTkFrame):
         self.events[key].pop(idx)
         if not self.events[key]:
             del self.events[key]
+        self.save_events()
         self.refresh()
-
-    # ── events panel ──────────────────────────────────────────────────────────
 
     def render_events(self):
         for w in self.event_area.winfo_children():
@@ -205,16 +181,16 @@ class CalendarFrame(ctk.CTkFrame):
         header_text = (self.selected_date.strftime("Events — %B %d, %Y") if self.selected_date else "Events")
         ctk.CTkLabel(self.event_area, text=header_text, font=ctk.CTkFont(size=13, weight="bold")).grid(row=0, column=0, sticky="w", pady=(0, 6))
 
-        inp = ctk.CTkFrame(self.event_area, fg_color="transparent")
-        inp.grid(row=1, column=0, sticky="ew", pady=(0, 6))
-        inp.grid_columnconfigure(0, weight=1)
+        input = ctk.CTkFrame(self.event_area, fg_color="transparent")
+        input.grid(row=1, column=0, sticky="ew", pady=(0, 6))
+        input.grid_columnconfigure(0, weight=1)
 
         has_day = bool(self.selected_date)
-        self.ev_entry = ctk.CTkEntry(inp, height=34, placeholder_text="Add event…" if has_day else "Select a day first", state="normal" if has_day else "disabled")
-        self.ev_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.ev_entry.bind("<Return>", lambda _: self.add_event())
+        self.event_entry = ctk.CTkEntry(input, height=34, placeholder_text="Add event…" if has_day else "Select a day first", state="normal" if has_day else "disabled")
+        self.event_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self.event_entry.bind("<Return>", lambda _: self.add_event())
 
-        add_btn = primary_btn(inp, "+ Add", self.add_event, width=72)
+        add_btn = primary_btn(input, "+ Add", self.add_event, width=72)
         add_btn.configure(state="normal" if has_day else "disabled")
         add_btn.grid(row=0, column=1)
 
@@ -227,14 +203,30 @@ class CalendarFrame(ctk.CTkFrame):
             ctk.CTkLabel(self.event_area, text="No events for this day", text_color=("gray60", "gray50")).grid(row=2, column=0, pady=8)
             return
 
-        ev_list = scrollable(self.event_area)
-        ev_list.grid(row=2, column=0, sticky="nsew")
-        ev_list.grid_columnconfigure(0, weight=1)
+        event_list = scrollable(self.event_area)
+        event_list.grid(row=2, column=0, sticky="nsew")
+        event_list.grid_columnconfigure(0, weight=1)
         key = self.key()
         for i, ev in enumerate(evs):
-            row_frame = ctk.CTkFrame(ev_list, fg_color=BG_CARD, corner_radius=8)
-            row_frame.grid(row=i, column=0, sticky="ew", pady=2)
+            row_frame = ctk.CTkFrame(event_list, fg_color=BG_CARD, corner_radius=8)
             row_frame.grid_columnconfigure(0, weight=1)
-            ctk.CTkLabel(row_frame, text=f"• {ev}", anchor="w", font=ctk.CTkFont(size=13)).grid(
-                row=0, column=0, padx=10, pady=6, sticky="ew")
+            row_frame.grid(row=i, column=0, sticky="ew", pady=2)
+
+            ctk.CTkLabel(row_frame, text=f"• {ev}", anchor="w", font=ctk.CTkFont(size=13)).grid(row=0, column=0, padx=10, pady=6, sticky="ew")
             danger_btn(row_frame, "🗑", lambda k=key, idx=i: self.delete_event(k, idx)).grid(row=0, column=1, padx=(0, 6))
+
+    def load_events(self):
+        file = self.events_file()
+
+        if file.exists():
+            with open(file, "r") as f:
+                self.events = json.load(f)
+        else:
+            self.events = {}
+
+    def save_events(self):
+        with open(self.events_file(), "w") as f:
+            json.dump(self.events, f, indent=4)
+
+    def events_file(self):
+        return EVENT_DIR /"events.json"

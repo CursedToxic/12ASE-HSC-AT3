@@ -1,7 +1,7 @@
 import sys
 import customtkinter
 from datetime import datetime
-from calendar import CalendarFrame
+from events import CalendarFrame
 from todo import TodoFrame
 from notes import NotesFrame
 from flashcards import FlashcardsFrame
@@ -64,11 +64,11 @@ class App(customtkinter.CTk):
         # Call the function to setup keybinds
         self.setup_keybinds()
 
-    def toggle_theme(self, btn):
+    def toggle_theme(self, button):
         new_mode = "Light" if self.settings["appearance"] == "Dark" else "Dark"
         self.settings["appearance"] = new_mode
         self.apply_settings(self.settings)
-        btn.configure(text="☀" if new_mode == "Dark" else "🌙")
+        button.configure(text="☀" if new_mode == "Dark" else "🌙")
     
         self.update_idletasks()
 
@@ -499,8 +499,10 @@ class App(customtkinter.CTk):
                 card.grid_rowconfigure(0, weight=1)
                 card.grid_columnconfigure(0, weight=1)
 
+                # Display text for each function
                 customtkinter.CTkLabel(card, text=label, font=("Helvetica", 13), fg_color="transparent", justify="center").grid(row=0, column=0, padx=12, pady=20)
 
+                # Keybinds for each of the functions: Claude instructed me to do this
                 card.bind("<Button-1>", lambda e, c=cmd: c())
                 for child in card.winfo_children():
                     child.bind("<Button-1>", lambda e, c=cmd: c())
@@ -508,7 +510,9 @@ class App(customtkinter.CTk):
                 widgets.append(card)
                 widget_colors.append(color)
 
-            logout_btn = customtkinter.CTkButton(self, text="Log Out", corner_radius=50, fg_color="transparent", border_width=1, border_color="gray30", text_color="gray50", hover_color="#1a1a1a", command=self.logout).grid(row=4, column=0, pady=20)
+            # Logout Button
+            logout_btn = customtkinter.CTkButton(self, text="Log Out", corner_radius=50, fg_color="transparent", border_width=1, border_color="gray30", text_color="gray50",
+                                                hover_color="#1a1a1a", command=self.logout).grid(row=4, column=0, pady=20)
 
         build()
 
