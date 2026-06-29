@@ -385,6 +385,7 @@ class NotesFrame(ctk.CTkFrame):
         self.notes[self.current]["body"] = (self.body_box.get("0.0", "end").rstrip("\n"))
         # Recalculate word count shown in the footer
         self.update_data()
+        self.save_pages()
 
     def update_data(self):
         if self.current is None:

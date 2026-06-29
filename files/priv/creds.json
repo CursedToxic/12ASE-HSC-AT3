@@ -8,6 +8,12 @@
         },
         "User": {
             "password_hash": "5751a44782594819e4cb8aa27c2c9d87a420af82bc6a5a05bc7f19c3bb00452b"
+        },
+        "alex": {
+            "password_hash": "b9f667eb13cb5ef8ec7a768c0639651ac517c2ab7cd42ef57741609dba26127d"
+        },
+        "cornyshawny": {
+            "password_hash": "db80da6e00f1a37005220af04f2e582c65ae508898e0f07a8bb08b443051cf61"
         }
     }
 }
