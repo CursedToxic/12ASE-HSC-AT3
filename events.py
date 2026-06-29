@@ -18,11 +18,11 @@ EVENT_DIR.mkdir(exist_ok=True)
 
 # This was as instructed from Claude
 # Solid purple button used for primary actions (e.g. "+ Add")
-def primary_btn(parent, text, command, width=100):
+def primary_button(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=13), width=width)
 
 # Transparent button with red text used for destructive actions (e.g. delete)
-def danger_btn(parent, text, command, width=32):
+def danger_button(parent, text, command, width=32):
     return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent", hover_color=("gray80", "gray30"),
                         text_color=("#A32D2D", "#F09595"), font=ctk.CTkFont(size=12), width=width)
 
@@ -154,8 +154,8 @@ class CalendarFrame(ctk.CTkFrame):
 
         # Row+1 to leave row 0 for headers
         for r, week in enumerate(self.date_buttons):
-            for c, btn in enumerate(week):
-                btn.grid(row=r + 1, column=c, padx=2, pady=2, sticky="nsew")
+            for c, button in enumerate(week):
+                button.grid(row=r + 1, column=c, padx=2, pady=2, sticky="nsew")
 
         # Events panel (right)
         self.event_area = ctk.CTkFrame(main, fg_color="transparent")
@@ -184,10 +184,10 @@ class CalendarFrame(ctk.CTkFrame):
             # Pad short months to always have 6 rows
             week = cal[week_idx] if week_idx < len(cal) else [0] * 7
             for day_idx, day in enumerate(week):
-                btn = self.date_buttons[week_idx][day_idx]
+                button = self.date_buttons[week_idx][day_idx]
                 if day == 0:
                     # Empty cell for days outside the month
-                    btn.configure(text="", state="disabled", fg_color="transparent", border_width=0)
+                    button.configure(text="", state="disabled", fg_color="transparent", border_width=0)
                 else:
                     # Full datetime for this cell
                     date_obj = datetime(year, month, day)
@@ -202,7 +202,7 @@ class CalendarFrame(ctk.CTkFrame):
                     # Colour priority: today > selected > normal
                     fg = PURPLE if is_today else (PURPLE_HOVER if selected else BG_CARD)
                     # Bullet dot indicates events exist; d=date_obj captures loop variable
-                    btn.configure(text=f"{day}\n●" if self.events.get(key) else str(day), state="normal", fg_color=fg, border_width=2 if selected else 0, border_color=PURPLE,
+                    button.configure(text=f"{day}\n●" if self.events.get(key) else str(day), state="normal", fg_color=fg, border_width=2 if selected else 0, border_color=PURPLE,
                                   command=lambda d=date_obj: self.select_date(d))
 
     def change_month(self, delta):
@@ -279,10 +279,10 @@ class CalendarFrame(ctk.CTkFrame):
         # Enter key submits the event
         self.event_entry.bind("<Return>", lambda _: self.add_event())
 
-        add_btn = primary_btn(input, "+ Add", self.add_event, width=72)
+        add_button = primary_button(input, "+ Add", self.add_event, width=72)
         # Greyed out until a date is selected
-        add_btn.configure(state="normal" if has_day else "disabled")
-        add_btn.grid(row=0, column=1)
+        add_button.configure(state="normal" if has_day else "disabled")
+        add_button.grid(row=0, column=1)
 
         if not has_day:
             # Placeholder when no date selected
@@ -313,7 +313,7 @@ class CalendarFrame(ctk.CTkFrame):
             # Event text, left-aligned
             ctk.CTkLabel(row_frame, text=f"• {ev}", anchor="w", font=ctk.CTkFont(size=13)).grid(row=0, column=0, padx=10, pady=6, sticky="ew")
             # k=key, idx=i captures loop variables
-            danger_btn(row_frame, "🗑", lambda k=key, idx=i: self.delete_event(k, idx)).grid(row=0, column=1, padx=(0, 6))
+            danger_button(row_frame, "🗑", lambda k=key, idx=i: self.delete_event(k, idx)).grid(row=0, column=1, padx=(0, 6))
 
     def load_events(self):
         # Resolve path to the JSON file

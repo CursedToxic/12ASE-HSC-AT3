@@ -13,16 +13,16 @@ PURPLE_HOVER = "#3C3489"
 BG_CARD      = ("gray85", "gray20")
 
 # Solid purple button used for primary actions
-def primary_btn(parent, text, command, width=100):
+def primary_button(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=13), width=width)
 
 # Outlined transparent button used for secondary actions
-def ghost_btn(parent, text, command, width=100):
+def ghost_button(parent, text, command, width=100):
     return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent", hover_color=("gray80", "gray30"), border_width=1, border_color=("gray60", "gray40"),
                          text_color=("gray10", "gray90"), font=ctk.CTkFont(size=13), width=width)
 
 # Transparent button with red text used for destructive actions
-def danger_btn(parent, text, command, width=32):
+def danger_button(parent, text, command, width=32):
     return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent", hover_color=("gray80", "gray30"), text_color=("#A32D2D", "#F09595"),
                          font=ctk.CTkFont(size=12), width=width)
 
@@ -111,8 +111,8 @@ class DeckListView(ctk.CTkFrame):
         self.deck_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         # Allow submitting with Enter as well as the button
         self.deck_entry.bind("<Return>", lambda _: self.do_create())
-        create_btn = primary_btn(inp, "+ Create", self.do_create, width=80)
-        create_btn.grid(row=0, column=1)
+        create_button = primary_button(inp, "+ Create", self.do_create, width=80)
+        create_button.grid(row=0, column=1)
 
         self.list_area = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.list_area.grid(row=2, column=0, padx=20, pady=(0, 16), sticky="nsew")
@@ -150,7 +150,7 @@ class DeckListView(ctk.CTkFrame):
             # Show card count with correct singular/plural
             ctk.CTkLabel(row, text=f"{count} card{'s' if count != 1 else ''}", text_color=("gray50", "gray55"), font=ctk.CTkFont(size=11)).grid(row=0, column=1, padx=8)
 
-            delete_button = danger_btn(row, "🗑", lambda n=name: self.on_delete(n))
+            delete_button = danger_button(row, "🗑", lambda n=name: self.on_delete(n))
             delete_button.grid(row=0, column=2, padx=(0, 6))
 
 class DeckEditorView(ctk.CTkFrame):
@@ -172,11 +172,11 @@ class DeckEditorView(ctk.CTkFrame):
         header.grid(row=0, column=0, padx=20, pady=(20, 4), sticky="ew")
         header.grid_columnconfigure(1, weight=1)
 
-        back_btn = ghost_btn(header, "← Back", on_back, width=80)
-        back_btn.grid(row=0, column=0, padx=(0, 12))
+        back_button = ghost_button(header, "← Back", on_back, width=80)
+        back_button.grid(row=0, column=0, padx=(0, 12))
         ctk.CTkLabel(header, text=deck_name, font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=1, sticky="w")
-        self.study_btn = primary_btn(header, "▶  Study", on_study, width=90)
-        self.study_btn.grid(row=0, column=2)
+        self.study_button = primary_button(header, "▶  Study", on_study, width=90)
+        self.study_button.grid(row=0, column=2)
 
         # Add-card row
         add_row = ctk.CTkFrame(self, fg_color=BG_CARD, corner_radius=10)
@@ -200,8 +200,8 @@ class DeckEditorView(ctk.CTkFrame):
         # Enter on the back field submits the new card
         self.back_entry.bind("<Return>", lambda _: self.add_card())
 
-        add_card_btn = primary_btn(add_row, "+ Add Card", self.add_card, width=90)
-        add_card_btn.grid(row=1, column=2, padx=(0, 12), pady=(0, 10))
+        add_card_button = primary_button(add_row, "+ Add Card", self.add_card, width=90)
+        add_card_button.grid(row=1, column=2, padx=(0, 12), pady=(0, 10))
 
         # Card list
         self.list_area = ctk.CTkScrollableFrame(self, fg_color="transparent")
@@ -240,7 +240,7 @@ class DeckEditorView(ctk.CTkFrame):
             w.destroy()
 
         # Disable the Study button when there are no cards to study
-        self.study_btn.configure(state="normal" if self.cards else "disabled")
+        self.study_button.configure(state="normal" if self.cards else "disabled")
 
         if not self.cards:
             ctk.CTkLabel(self.list_area, text="No flashcards yet — add one above!", text_color=("gray60", "gray50")).grid(row=0, column=0, columnspan=2, pady=20)
@@ -261,7 +261,7 @@ class DeckEditorView(ctk.CTkFrame):
             # Back side is greyed out to visually distinguish it from the front
             ctk.CTkLabel(row, text=card["back"], anchor="w", font=ctk.CTkFont(size=13), text_color=("gray50", "gray55"), wraplength=200).grid(row=0, column=1, padx=10, pady=8, sticky="ew")
             # i=i captures the loop variable so each button deletes the correct card
-            delete_button = danger_btn(row, "🗑", lambda i=i: self.delete_card(i))
+            delete_button = danger_button(row, "🗑", lambda i=i: self.delete_card(i))
             delete_button.grid(row=0, column=2, padx=(0, 6))
 
 class StudyView(ctk.CTkFrame):
@@ -289,8 +289,8 @@ class StudyView(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.grid(row=0, column=0, padx=20, pady=(20, 4), sticky="ew")
         header.grid_columnconfigure(1, weight=1)
-        study_back_btn = ghost_btn(header, "← Back", on_back, width=80)
-        study_back_btn.grid(row=0, column=0, padx=(0, 12))
+        study_back_button = ghost_button(header, "← Back", on_back, width=80)
+        study_back_button.grid(row=0, column=0, padx=(0, 12))
         ctk.CTkLabel(header, text=f"Studying: {deck_name}", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, sticky="w")
         # Shows "X / total" progress
         self.progress_label = ctk.CTkLabel(header, text="", font=ctk.CTkFont(size=12), text_color="gray50")
@@ -329,16 +329,16 @@ class StudyView(ctk.CTkFrame):
         button_row = ctk.CTkFrame(self, fg_color="transparent")
         button_row.grid(row=2, column=0, pady=(0, 20))
 
-        self.unknown_btn = ctk.CTkButton(button_row, text="✗  Still Learning", fg_color=("#8B2020", "#6B1A1A"), hover_color=("#6B1A1A", "#4B1010"),
+        self.unknown_button = ctk.CTkButton(button_row, text="✗  Still Learning", fg_color=("#8B2020", "#6B1A1A"), hover_color=("#6B1A1A", "#4B1010"),
                                          font=ctk.CTkFont(size=14), width=150, corner_radius=50, command=self.mark_unknown)
-        self.unknown_btn.grid(row=0, column=0, padx=10)
+        self.unknown_button.grid(row=0, column=0, padx=10)
 
-        self.flip_btn = ghost_btn(button_row, "Flip", self.flip, width=80)
-        self.flip_btn.grid(row=0, column=1, padx=10)
+        self.flip_button = ghost_button(button_row, "Flip", self.flip, width=80)
+        self.flip_button.grid(row=0, column=1, padx=10)
 
-        self.known_btn = ctk.CTkButton(button_row, text="✓  Got It", fg_color=("#1a5c2a", "#1a4a22"), hover_color=("#134520", "#0f3318"),
+        self.known_button = ctk.CTkButton(button_row, text="✓  Got It", fg_color=("#1a5c2a", "#1a4a22"), hover_color=("#134520", "#0f3318"),
                                        font=ctk.CTkFont(size=14), width=150, corner_radius=50, command=self.mark_known)
-        self.known_btn.grid(row=0, column=2, padx=10)
+        self.known_button.grid(row=0, column=2, padx=10)
 
         self.load_card()
 
@@ -379,8 +379,8 @@ class StudyView(ctk.CTkFrame):
             self.set_action_state("disabled")
 
     def set_action_state(self, state):
-        self.known_btn.configure(state=state)
-        self.unknown_btn.configure(state=state)
+        self.known_button.configure(state=state)
+        self.unknown_button.configure(state=state)
 
     def mark_known(self):
         self.known += 1
@@ -415,10 +415,10 @@ class StudyView(ctk.CTkFrame):
 
         ctk.CTkLabel(results, text=f"{self.known} known  •  {self.unknown} still learning", font=ctk.CTkFont(size=14), text_color="gray50").grid(row=2, column=0, pady=(0, 24))
 
-        btns = ctk.CTkFrame(results, fg_color="transparent")
-        btns.grid(row=3, column=0, pady=(0, 30))
+        buttons = ctk.CTkFrame(results, fg_color="transparent")
+        buttons.grid(row=3, column=0, pady=(0, 30))
         # Returns to the deck editor, from which the user can start another session
-        again_btn = primary_btn(btns, "Study Again", lambda: self.on_back(), width=120)
-        again_btn.grid(row=0, column=0, padx=8)
-        back_btn = ghost_btn(btns, "Back to Deck", self.on_back, width=120)
-        back_btn.grid(row=0, column=1, padx=8)
+        again_button = primary_button(buttons, "Study Again", lambda: self.on_back(), width=120)
+        again_button.grid(row=0, column=0, padx=8)
+        back_button = ghost_button(buttons, "Back to Deck", self.on_back, width=120)
+        back_button.grid(row=0, column=1, padx=8)

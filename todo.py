@@ -1,7 +1,7 @@
 import json
 import customtkinter as ctk
 from pathlib import Path
-from events import PURPLE, PURPLE_HOVER, BG_CARD, primary_btn, danger_btn, scrollable
+from events import PURPLE, PURPLE_HOVER, BG_CARD, primary_button, danger_button, scrollable
 
 # Create File Path to save tasks if there is not already one
 # This was instructed by ChatGPT
@@ -34,7 +34,7 @@ class TodoFrame(ctk.CTkFrame):
         self.task_entry.bind("<Return>", lambda _: self.add_task())
 
         # Create an 'Add' button to add more to-dos
-        add_btn = primary_btn(input_frame, "+ Add", self.add_task, width=72)
+        add_btn = primary_button(input_frame, "+ Add", self.add_task, width=72)
         add_btn.grid(row=0, column=1)
 
         # Create a scrollable list area
@@ -117,7 +117,7 @@ class TodoFrame(ctk.CTkFrame):
                              text_color=("gray55", "gray50") if done_flag else ("gray10", "gray90")).grid(row=0, column=1, pady=6, sticky="ew")
 
                 # Trash icon button to permanently remove the task
-                delete_button = danger_btn(row, "🗑", lambda i=real_index: self.delete_task(i))
+                delete_button = danger_button(row, "🗑", lambda i=real_index: self.delete_task(i))
                 # Right side of the row
                 delete_button.grid(row=0, column=2, padx=(0, 6))
                 # Advance to the next row for the next task card

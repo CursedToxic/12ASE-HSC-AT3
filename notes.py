@@ -133,13 +133,13 @@ class NotesFrame(ctk.CTkFrame):
         toggle.grid(row=2, column=0, sticky="ew", padx=8, pady=(0, 10))
         
         # Gallery View Button
-        self.gallery_btn = ctk.CTkButton(toggle, text="⊞ Gallery", height=28, corner_radius=8, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=12), command=self.show_gallery)
-        self.gallery_btn.grid(row=0, column=0, padx=(0, 3), sticky="ew")
+        self.gallery_button = ctk.CTkButton(toggle, text="⊞ Gallery", height=28, corner_radius=8, fg_color=PURPLE, hover_color=PURPLE_HOVER, font=ctk.CTkFont(size=12), command=self.show_gallery)
+        self.gallery_button.grid(row=0, column=0, padx=(0, 3), sticky="ew")
         
         # Editor View Button: After the command kwarg: I followed Claude's instructions open the page
-        self.editor_btn = ctk.CTkButton(toggle, text="✎ Editor", height=28, corner_radius=8, fg_color="transparent", hover_color=("gray80", "gray25"), font=ctk.CTkFont(size=12),
+        self.editor_button = ctk.CTkButton(toggle, text="✎ Editor", height=28, corner_radius=8, fg_color="transparent", hover_color=("gray80", "gray25"), font=ctk.CTkFont(size=12),
             command=lambda: self.open_page(self.current) if self.current is not None else None)
-        self.editor_btn.grid(row=0, column=1, padx=(3, 0), sticky="ew")
+        self.editor_button.grid(row=0, column=1, padx=(3, 0), sticky="ew")
 
     # Create the editor view
     def build_editor_view(self):
@@ -404,11 +404,11 @@ class NotesFrame(ctk.CTkFrame):
     def update_toggle_buttons(self):
         # Highlight the active view button and reset the inactive one
         if self.view == "gallery":
-            self.gallery_btn.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
-            self.editor_btn.configure(fg_color="transparent")
+            self.gallery_button.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
+            self.editor_button.configure(fg_color="transparent")
         else:
-            self.editor_btn.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
-            self.gallery_btn.configure(fg_color="transparent")
+            self.editor_button.configure(fg_color=PURPLE, hover_color=PURPLE_HOVER)
+            self.gallery_button.configure(fg_color="transparent")
 
     def save_pages(self):
         # Overwrite the JSON file with the current in-memory notes list

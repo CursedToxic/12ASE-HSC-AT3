@@ -56,10 +56,10 @@ class App(customtkinter.CTk):
         register_button = customtkinter.CTkButton(self, text="Register",  corner_radius=50, command=self.registration).grid(row=2, column=0, padx=10, pady=10, sticky="n")
         
         # Theme button: Outsourcing from Claude
-        self.theme_btn = customtkinter.CTkButton(
+        self.theme_button = customtkinter.CTkButton(
             self, text="☀" if self.settings["appearance"] == "Dark" else "🌙", width=36, height=36, corner_radius=18, fg_color="transparent", border_width=1,
-            border_color=("gray70", "gray30"), text_color=("gray30", "gray70"), hover_color=("gray85", "gray20"), command=lambda: self.toggle_theme(self.theme_btn))
-        self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            border_color=("gray70", "gray30"), text_color=("gray30", "gray70"), hover_color=("gray85", "gray20"), command=lambda: self.toggle_theme(self.theme_button))
+        self.theme_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
         # Call the function to setup keybinds
         self.setup_keybinds()
@@ -121,10 +121,10 @@ class App(customtkinter.CTk):
             self.after_cancel(self.clock_job)
             self.clock_job = None
         for widget in self.winfo_children():
-            if widget is self.theme_btn:
+            if widget is self.theme_button:
                 continue
             widget.destroy()
-        self.theme_btn.place_forget()
+        self.theme_button.place_forget()
         for r in range(num_rows):
             self.grid_rowconfigure(r, weight=0)
         self.grid_columnconfigure(0, weight=1)
@@ -156,7 +156,7 @@ class App(customtkinter.CTk):
             customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.registration).grid(row=2, column=0, padx=10, pady=10, sticky="n")
 
             # Theme button
-            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            self.theme_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
         build()
 
@@ -266,7 +266,7 @@ class App(customtkinter.CTk):
             
             # I had to learn this. This inserts the element into the desired position, without the constraints of a grid.
             # Relative coordinates ensure that when the window is being scaled, the button always stays in the same place.
-            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            self.theme_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
             # Refresh app
             self.update_idletasks()
@@ -361,7 +361,7 @@ class App(customtkinter.CTk):
             back_button.grid(row=9, column=0, padx=10, pady=10, sticky="n")
 
             # Place the theme button so it always stays in the top right corner
-            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            self.theme_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
             self.update_idletasks()
         build()
 
@@ -401,8 +401,8 @@ class App(customtkinter.CTk):
             am_pm.grid(row=0, column=1)
 
             # Home button
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home)
-            home_btn.grid(row=3, column=0, pady=20)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home)
+            home_button.grid(row=3, column=0, pady=20)
 
             # Followed instructions from Claude Code, converts datetime into string, same with AM/PM, update every 1000ms or 1s
             def tick():
@@ -447,7 +447,7 @@ class App(customtkinter.CTk):
 
             customtkinter.CTkLabel(header, text=greeting, font=self.greeting_font, anchor="w").grid(row=0, column=0, sticky="w")
 
-            settings_btn = customtkinter.CTkButton(
+            settings_button = customtkinter.CTkButton(
                 header, text="⚙", width=36, height=36, corner_radius=18, fg_color="transparent", border_width=1,
                 border_color="gray30", text_color="gray50", hover_color="#1a1a1a", command=self.show_settings
             ).grid(row=0, column=1)
@@ -511,7 +511,7 @@ class App(customtkinter.CTk):
                 widget_colors.append(color)
 
             # Logout Button
-            logout_btn = customtkinter.CTkButton(self, text="Log Out", corner_radius=50, fg_color="transparent", border_width=1, border_color="gray30", text_color="gray50",
+            logout_button = customtkinter.CTkButton(self, text="Log Out", corner_radius=50, fg_color="transparent", border_width=1, border_color="gray30", text_color="gray50",
                                                 hover_color="#1a1a1a", command=self.logout).grid(row=4, column=0, pady=20)
 
         build()
@@ -537,7 +537,7 @@ class App(customtkinter.CTk):
             SettingsFrame(self, self.settings, on_apply=self.on_settings_apply).grid(row=0, column=0, sticky="nsew")
 
             # Display home button
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
     # Followed Claude's instructions
@@ -550,7 +550,7 @@ class App(customtkinter.CTk):
             self.clear()
             self.grid_rowconfigure(0, weight=1)
             FlashcardsFrame(self).grid(row=0, column=0, sticky="nsew")
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
     def show_todo(self):
@@ -559,7 +559,7 @@ class App(customtkinter.CTk):
             self.clear()
             self.grid_rowconfigure(0, weight=1)
             TodoFrame(self).grid(row=0, column=0, sticky="nsew")
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
     def show_notes(self):
@@ -568,7 +568,7 @@ class App(customtkinter.CTk):
             self.clear()
             self.grid_rowconfigure(0, weight=1)
             NotesFrame(self).grid(row=0, column=0, sticky="nsew")
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
     def show_calendar(self):
@@ -583,7 +583,7 @@ class App(customtkinter.CTk):
             CalendarFrame(self).grid(row=0, column=0, sticky="nsew")
 
             # Display home button
-            home_btn = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
+            home_button = customtkinter.CTkButton(self, text="⌂  Home", corner_radius=50, command=self.go_home).grid(row=1, column=0, pady=10)
         build()
 
     def logout(self):
@@ -606,14 +606,14 @@ class App(customtkinter.CTk):
             self.ui_title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
             # Login Button
-            login_btn = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login)
-            login_btn.grid(row=1, column=0, padx=10, pady=10, sticky="n")
+            login_button = customtkinter.CTkButton(self, text="Login", corner_radius=50, command=self.login)
+            login_button.grid(row=1, column=0, padx=10, pady=10, sticky="n")
             
             # Register Button
-            register_btn = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.registration)
-            register_btn.grid(row=2, column=0, padx=10, pady=10, sticky="n")
+            register_button = customtkinter.CTkButton(self, text="Register", corner_radius=50, command=self.registration)
+            register_button.grid(row=2, column=0, padx=10, pady=10, sticky="n")
 
             # Theme Button
-            self.theme_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+            self.theme_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
         build()

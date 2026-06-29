@@ -50,8 +50,8 @@ class SettingsFrame(ctk.CTkScrollableFrame):
         option_row(self, FONT_SIZE_OPTIONS, self.scale_var, start_row=4)
 
         # Pill-shaped button that saves the current selections
-        apply_btn = ctk.CTkButton(self, text="Apply", fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=50, font=ctk.CTkFont(size=14), width=140, command=self.apply)
-        apply_btn.grid(row=6, column=0, pady=24)
+        apply_button = ctk.CTkButton(self, text="Apply", fg_color=PURPLE, hover_color=PURPLE_HOVER, corner_radius=50, font=ctk.CTkFont(size=14), width=140, command=self.apply)
+        apply_button.grid(row=6, column=0, pady=24)
 
         # Data management section heading
         section_label(self, row=7, text="Data")
@@ -80,13 +80,13 @@ class SettingsFrame(ctk.CTkScrollableFrame):
         # Warning message describing what will be deleted
         ctk.CTkLabel(dialog, text="This will permanently delete all events,\ntasks, notes, and flashcards.", font=ctk.CTkFont(size=13)).pack(pady=(24, 16))
         # Row that holds the two action buttons side by side
-        btn_row = ctk.CTkFrame(dialog, fg_color="transparent")
-        btn_row.pack()
+        button_row = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_row.pack()
         # Ghost-outlined button that dismisses the dialog without deleting
-        ctk.CTkButton(btn_row, text="Cancel", width=120, fg_color="transparent", border_width=1, border_color=("gray60", "gray40"), hover_color=("gray80", "gray25"),
+        ctk.CTkButton(button_row, text="Cancel", width=120, fg_color="transparent", border_width=1, border_color=("gray60", "gray40"), hover_color=("gray80", "gray25"),
                       command=dialog.destroy).pack(side="left", padx=(0, 8))
         # Red destructive button; calls delete then closes the dialog
-        ctk.CTkButton(btn_row, text="Delete", width=120, fg_color="#A32D2D", hover_color="#7A1F1F", command=lambda: [self.delete_all_data(), dialog.destroy()]).pack(side="left")
+        ctk.CTkButton(button_row, text="Delete", width=120, fg_color="#A32D2D", hover_color="#7A1F1F", command=lambda: [self.delete_all_data(), dialog.destroy()]).pack(side="left")
 
     def delete_all_data(self):
         # Remove files for each function
