@@ -14,6 +14,9 @@
         },
         "cornyshawny": {
             "password_hash": "db80da6e00f1a37005220af04f2e582c65ae508898e0f07a8bb08b443051cf61"
+        },
+        "ronen": {
+            "password_hash": "9405a00d3d11e8e71adc3df84d1311a36ae9b5d66e17233d18875bcbc8c71c77"
         }
     }
 }
