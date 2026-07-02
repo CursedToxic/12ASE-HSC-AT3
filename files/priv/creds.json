@@ -3,12 +3,6 @@
         "Victor": {
             "password_hash": "c0bd1d61f4623aa83eb89896ab632ba7a5535e06e9ef942588dd6c0dda5c8442"
         },
-        "Admin": {
-            "password_hash": "bad55a03799477b506efc757d00c868ce7a451460f03bd82041c668188d49f98"
-        },
-        "User": {
-            "password_hash": "5751a44782594819e4cb8aa27c2c9d87a420af82bc6a5a05bc7f19c3bb00452b"
-        },
         "alex": {
             "password_hash": "b9f667eb13cb5ef8ec7a768c0639651ac517c2ab7cd42ef57741609dba26127d"
         },
@@ -17,6 +11,9 @@
         },
         "ronen": {
             "password_hash": "9405a00d3d11e8e71adc3df84d1311a36ae9b5d66e17233d18875bcbc8c71c77"
+        },
+        "User": {
+            "password_hash": "22beadf6b59f6ce33e22df10fde3dab2ad77dbe1b4b9fad268ebd23b6a38d4c6"
         }
     }
 }
